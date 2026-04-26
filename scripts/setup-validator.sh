@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # =============================================================================
-# setup-validator.sh — Bootstrap d'un validateur WINTG sur Ubuntu 22.04 LTS
+# setup-validator.sh — Bootstrap d'un validateur WINTG (Ubuntu 22.04 LTS)
 # =============================================================================
+# Pour AlmaLinux 9 / Rocky 9 / RHEL 9 : utiliser `install-besu-almalinux.sh`
+# (notamment si DirectAdmin est installé sur le serveur).
+#
+# Détection automatique : si l'OS est AlmaLinux/RHEL, ce script délègue.
+#
 # Usage : sudo ./scripts/setup-validator.sh [testnet|mainnet]
 #
 # Prérequis serveur : 8 vCPU, 16 GB RAM, 200 GB SSD NVMe, Ubuntu 22.04+.
@@ -27,6 +32,15 @@ step() { printf "\n\033[1;36m▶ %s\033[0m\n" "$*"; }
 ok()   { printf "  \033[1;32m✓\033[0m %s\n" "$*"; }
 
 [ "$EUID" -eq 0 ] || { echo "Doit être lancé en root (sudo)." >&2; exit 1; }
+
+# Auto-redirect vers install-besu-almalinux.sh si AlmaLinux/RHEL/Rocky
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  if echo "${ID:-} ${ID_LIKE:-}" | grep -qiE "(almalinux|rhel|rocky|centos|fedora)"; then
+    echo "▶ OS détecté : $NAME — redirection vers install-besu-almalinux.sh"
+    exec "$(dirname "${BASH_SOURCE[0]}")/install-besu-almalinux.sh" "$NETWORK" validator
+  fi
+fi
 
 # -----------------------------------------------------------------------------
 step "1/8 — Mise à jour OS et dépendances"
