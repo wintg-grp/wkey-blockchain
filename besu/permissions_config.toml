@@ -1,0 +1,36 @@
+# =============================================================================
+# Permissions IBFT 2.0 — WINTG (Allowlist des nœuds autorisés)
+# =============================================================================
+# Format : enode://<pubkey-128hex>@<host>:<port>
+#
+# Phase 1 (bootstrap) :
+#   - 1 validateur principal
+#   - 1 hot standby
+#   - 1+ nœud(s) RPC public
+#   - 1 explorer (Blockscout) — facultatif
+#
+# Mises à jour :
+#   - Ajouter une entrée puis recharger : `besu admin_addPeer` côté Besu OU
+#     redémarrage propre (les permissions sont relues au démarrage).
+#   - Pour ajouter un nouveau validateur : voir scripts/add-validator.sh
+# =============================================================================
+
+nodes-allowlist = [
+  # Validateur principal
+  # "enode://<pubkey>@<ip>:30303",
+
+  # Hot standby
+  # "enode://<pubkey>@<ip>:30303",
+
+  # Nœud RPC public
+  # "enode://<pubkey>@<ip>:30303",
+
+  # Blockscout (en lecture)
+  # "enode://<pubkey>@<ip>:30303",
+]
+
+# accounts-allowlist : non activée en phase 1 (chaîne ouverte aux utilisateurs).
+# Activer post-TGE si compliance le requiert.
+# accounts-allowlist = [
+#   "0x0000000000000000000000000000000000000000",
+# ]

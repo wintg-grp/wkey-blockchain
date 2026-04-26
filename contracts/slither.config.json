@@ -1,0 +1,7 @@
+{
+  "filter_paths": "node_modules|test|@openzeppelin",
+  "exclude_informational": true,
+  "exclude_low": false,
+  "compile_force_framework": "hardhat",
+  "hardhat_ignore_compile": true
+}

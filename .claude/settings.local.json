@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "PowerShell(choco search besu --exact --limit-output 2>&1)",
+      "PowerShell(choco search hyperledger-besu --exact --limit-output 2>&1)",
+      "Bash(npm install *)",
+      "Bash(\"/c/Users/Administrateur/AppData/Local/Besu/current/bin/besu.bat\" --version)",
+      "Bash(/c/Users/Administrateur/AppData/Local/Besu/current/bin/besu.bat --help)",
+      "Bash(grep -iC1 \"coinbase\" /tmp/besu-help-clean.txt)",
+      "Bash(grep -iC2 \"validator\" /tmp/besu-help-clean.txt)",
+      "Bash(grep -iC2 \"profile\" /tmp/besu-help-clean.txt)",
+      "Bash(/c/Users/Administrateur/AppData/Local/Besu/current/bin/besu.bat validate-config *)",
+      "Bash(export DEPLOYER_ADDRESS=0xC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FFEEC0FF)",
+      "Bash(export VALIDATORS=0x1111111111111111111111111111111111111111)",
+      "Bash(export LIQUIDITY_MULTISIG_ADDRESS=0xBABEBABEBABEBABEBABEBABEBABEBABEBABEBABE)",
+      "Bash(export GENESIS_TIMESTAMP=1735689600)",
+      "Bash(npx ts-node *)",
+      "Bash(npx hardhat *)",
+      "Bash(npx tsc *)",
+      "Bash(chmod +x ../scripts/*.sh)",
+      "Bash(tasklist)",
+      "Bash(ls -la artifacts/contracts/src/token/TokenFactory.sol/)",
+      "Bash(pkill -f \"hardhat coverage\")",
+      "Bash(pkill -f \"hardhat node\")",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)"
+    ]
+  }
+}

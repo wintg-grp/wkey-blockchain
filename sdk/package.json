@@ -1,0 +1,25 @@
+{
+  "name": "@wintg/sdk",
+  "version": "1.0.0",
+  "description": "Official TypeScript SDK for the WINTG blockchain",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "engines": { "node": ">=20" },
+  "keywords": ["wintg", "ethereum", "evm", "blockchain", "togo", "uemoa"],
+  "peerDependencies": {
+    "ethers": ">=6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ethers": "^6.11.0",
+    "typescript": "^5.4.2",
+    "vitest": "^1.4.0"
+  }
+}

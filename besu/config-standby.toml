@@ -1,0 +1,79 @@
+# =============================================================================
+# WINTG Blockchain — Besu config (Hot Standby)
+# =============================================================================
+# Profil : full node SYNCHRONISÉ avec le validateur principal, prêt à reprendre
+# le rôle de validateur en cas de panne. Possède une clé validateur séparée
+# (pré-configurée dans extraData) ou peut être promu via vote IBFT.
+#
+# Procédure de bascule : voir scripts/promote-standby.sh
+# =============================================================================
+
+profile                    = "private"
+genesis-file               = "/etc/besu/genesis.json"
+data-path                  = "/var/lib/besu/data"
+network-id                 = 2280
+node-private-key-file      = "/etc/besu/keys/key"     # clé du standby (différente du primaire !)
+identity                   = "wintg-standby-01"
+
+# Pas de mining direct — l'extraData détermine le rôle. En phase 1 le standby
+# n'est pas dans la liste des validateurs ; il est promu via scripts/promote-standby.sh
+# qui édite extraData et redémarre.
+target-gas-limit           = 30000000
+min-gas-price              = 1000000000
+
+# -----------------------------------------------------------------------------
+# P2P
+# -----------------------------------------------------------------------------
+p2p-enabled                = true
+p2p-host                   = "0.0.0.0"
+p2p-port                   = 30303
+discovery-enabled          = true
+max-peers                  = 50
+remote-connections-limit-enabled = true
+remote-connections-max-percentage = 60
+static-nodes-file          = "/etc/besu/static-nodes.json"
+
+# -----------------------------------------------------------------------------
+# RPC interne pour ops uniquement
+# -----------------------------------------------------------------------------
+rpc-http-enabled           = true
+rpc-http-host              = "127.0.0.1"
+rpc-http-port              = 8545
+rpc-http-cors-origins      = []
+rpc-http-api               = ["ETH", "NET", "WEB3", "IBFT", "ADMIN"]
+rpc-http-authentication-enabled = true
+rpc-http-authentication-credentials-file = "/etc/besu/auth.toml"
+
+rpc-ws-enabled             = false
+
+# -----------------------------------------------------------------------------
+# Permissions
+# -----------------------------------------------------------------------------
+permissions-nodes-config-file-enabled = true
+permissions-nodes-config-file         = "/etc/besu/permissions_config.toml"
+
+# -----------------------------------------------------------------------------
+# Sync
+# -----------------------------------------------------------------------------
+sync-mode                  = "FULL"
+sync-min-peers             = 1
+data-storage-format        = "BONSAI"
+bonsai-historical-block-limit = 512
+
+# -----------------------------------------------------------------------------
+# Métriques
+# -----------------------------------------------------------------------------
+metrics-enabled            = true
+metrics-host               = "127.0.0.1"
+metrics-port               = 9545
+metrics-category           = ["BLOCKCHAIN", "ETHEREUM", "JVM", "NETWORK", "PEERS", "SYNCHRONIZER"]
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+logging                    = "INFO"
+host-allowlist             = ["localhost", "127.0.0.1"]
+nat-method                 = "NONE"
+
+# Standby = même hardware specs que le primaire (8 vCPU / 16 GB / 200 GB SSD).
+# JVM : BESU_OPTS="-Xmx8g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"

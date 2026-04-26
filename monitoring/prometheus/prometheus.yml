@@ -1,0 +1,46 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: wintg
+    chain: WINTG
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ---------------------------------------------------------------------------
+  # Besu — chaque nœud expose ses métriques sur :9545
+  # ---------------------------------------------------------------------------
+  - job_name: besu-validator
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['host.docker.internal:9545']  # validateur primaire local
+        labels: { node: 'validator-01', role: 'validator' }
+      # - targets: ['10.0.0.11:9545']
+      #   labels: { node: 'standby-01', role: 'standby' }
+      # - targets: ['10.0.0.20:9545']
+      #   labels: { node: 'rpc-01',     role: 'rpc' }
+
+  # ---------------------------------------------------------------------------
+  # node-exporter (CPU, RAM, disque, réseau host)
+  # ---------------------------------------------------------------------------
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+
+  # ---------------------------------------------------------------------------
+  # Blockscout (si déployé)
+  # ---------------------------------------------------------------------------
+  # - job_name: blockscout
+  #   static_configs:
+  #     - targets: ['host.docker.internal:4000']

@@ -1,0 +1,100 @@
+name: Deploy to server
+
+# Déploie le code sur le serveur de production via SSH dès qu'on push sur main.
+# Le serveur récupère les nouvelles configs, relance Besu si besoin.
+#
+# CONFIGURATION REQUISE (Settings → Secrets) :
+#   SSH_PRIVATE_KEY      : clé privée SSH avec accès root au serveur
+#   SERVER_HOST_VALIDATOR: IP/hostname du validateur (ex: chain.wkey.app)
+#   SERVER_HOST_RPC      : IP/hostname du nœud RPC public
+#   SERVER_USER          : utilisateur SSH (typiquement "root")
+#   DEPLOY_BRANCH        : branche à déployer (typiquement "main")
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Cible du déploiement"
+        required: true
+        default: "rpc"
+        type: choice
+        options:
+          - validator
+          - standby
+          - rpc
+      network:
+        description: "Réseau"
+        required: true
+        default: "testnet"
+        type: choice
+        options:
+          - testnet
+          - mainnet
+
+  push:
+    branches: [main]
+    paths:
+      - "besu/config*.toml"
+      - "besu/permissions_config.toml"
+      - "scripts/**"
+      - ".github/workflows/deploy-server.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy ${{ github.event.inputs.target || 'rpc' }} (${{ github.event.inputs.network || 'testnet' }})
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Determine host
+        id: host
+        run: |
+          TARGET="${{ github.event.inputs.target || 'rpc' }}"
+          case "$TARGET" in
+            validator) echo "HOST=${{ secrets.SERVER_HOST_VALIDATOR }}" >> "$GITHUB_OUTPUT" ;;
+            standby)   echo "HOST=${{ secrets.SERVER_HOST_STANDBY }}"   >> "$GITHUB_OUTPUT" ;;
+            rpc)       echo "HOST=${{ secrets.SERVER_HOST_RPC }}"        >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Verify host reachable
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 \
+            ${{ secrets.SERVER_USER }}@${{ steps.host.outputs.HOST }} \
+            "echo connected"
+
+      - name: Pull latest code on server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ steps.host.outputs.HOST }} <<'EOF'
+            cd /opt/wintg
+            git fetch origin
+            git reset --hard origin/${{ secrets.DEPLOY_BRANCH || 'main' }}
+            chmod +x scripts/*.sh
+          EOF
+
+      - name: Sync Besu config (if changed)
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ steps.host.outputs.HOST }} <<'EOF'
+            CHANGED=$(diff -q /opt/wintg/besu/config.toml /etc/besu/config.toml 2>/dev/null && echo same || echo diff)
+            if [ "$CHANGED" = "diff" ]; then
+              cp /opt/wintg/besu/config.toml /etc/besu/config.toml
+              cp /opt/wintg/besu/permissions_config.toml /etc/besu/permissions_config.toml
+              cp /opt/wintg/besu/static-nodes.json /etc/besu/static-nodes.json 2>/dev/null || true
+              chown -R besu:besu /etc/besu/
+              systemctl restart besu
+              sleep 5
+            fi
+          EOF
+
+      - name: Healthcheck
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ steps.host.outputs.HOST }} \
+            "/opt/wintg/scripts/health-check.sh || true"

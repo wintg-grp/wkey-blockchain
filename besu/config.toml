@@ -1,0 +1,151 @@
+# =============================================================================
+# WINTG Blockchain — Hyperledger Besu config (validateur principal)
+# =============================================================================
+# Profile     : VALIDATEUR (rôle auto-déterminé par extraData + node key)
+# Consensus   : IBFT 2.0
+# Chain ID    : 2280 (mainnet) — surcharger via --network-id en testnet (22800)
+# Besu cible  : 26.4.0+
+# =============================================================================
+#
+# ⚠️  Besu 26.x a supprimé `--miner-enabled` et `--miner-coinbase` pour les
+# chaînes EVM modernes. Pour IBFT 2.0 :
+#   - Le rôle "validateur" est implicite : être dans la liste des validators
+#     du `extraData` du genesis + posséder la clé privée associée.
+#   - Le coinbase = adresse dérivée de `--node-private-key-file`.
+# Implication pour la répartition 70/20/10 des fees :
+#   → Les fees vont à l'adresse EOA du validateur.
+#   → Un keeper (script externe) doit périodiquement transférer ces fees vers
+#     le `FeeDistributor` qui exécute `distribute()` (70 % Treasury / 20 %
+#     pool validateurs / 10 % burn).
+#   → Voir scripts/keeper-fees.ts (à produire au sprint 3).
+# =============================================================================
+#
+# Surcharges via variables d'environnement :
+#   - BESU_GENESIS_FILE
+#   - BESU_DATA_PATH
+#   - BESU_P2P_HOST
+#   - BESU_BOOTNODES
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Profile Besu (private = consortium IBFT/QBFT, désactive certains défauts mainnet)
+# -----------------------------------------------------------------------------
+profile                    = "private"
+
+# -----------------------------------------------------------------------------
+# Identité du réseau
+# -----------------------------------------------------------------------------
+genesis-file               = "/etc/besu/genesis.json"
+data-path                  = "/var/lib/besu/data"
+network-id                 = 2280
+node-private-key-file      = "/etc/besu/keys/key"          # clé chiffrée (déchiffrée par wrapper systemd)
+identity                   = "wintg-validator-01"
+
+# -----------------------------------------------------------------------------
+# Bloc / gas / extra-data
+# -----------------------------------------------------------------------------
+target-gas-limit           = 30000000
+min-gas-price              = 1000000000                     # 1 gwei minimum (anti-spam)
+min-priority-fee           = 0
+miner-extra-data           = "0x57494e54472d76616c696461746f722d3031"   # "WINTG-validator-01" en ASCII
+
+# -----------------------------------------------------------------------------
+# P2P / découverte
+# -----------------------------------------------------------------------------
+p2p-enabled                = true
+p2p-host                   = "0.0.0.0"
+p2p-port                   = 30303
+p2p-interface              = "0.0.0.0"
+discovery-enabled          = true
+max-peers                  = 50
+remote-connections-limit-enabled  = true
+remote-connections-max-percentage = 60
+
+# Bootnodes — à compléter une fois le standby et les nœuds RPC déployés
+# bootnodes = [
+#   "enode://<pubkey>@<ip>:30303",
+#   "enode://<pubkey>@<ip>:30303"
+# ]
+static-nodes-file          = "/etc/besu/static-nodes.json"
+
+# -----------------------------------------------------------------------------
+# RPC / API
+# -----------------------------------------------------------------------------
+# ⚠️ Le validateur N'EXPOSE PAS de RPC public — seulement loopback pour ops
+rpc-http-enabled           = true
+rpc-http-host              = "127.0.0.1"
+rpc-http-port              = 8545
+rpc-http-cors-origins      = []
+rpc-http-api               = ["ETH", "NET", "WEB3", "IBFT", "ADMIN", "DEBUG"]
+rpc-http-authentication-enabled = true
+rpc-http-authentication-credentials-file = "/etc/besu/auth.toml"
+
+rpc-ws-enabled             = false
+graphql-http-enabled       = false
+
+# -----------------------------------------------------------------------------
+# Permissions (consortium IBFT 2.0)
+# -----------------------------------------------------------------------------
+permissions-nodes-config-file-enabled    = true
+permissions-nodes-config-file            = "/etc/besu/permissions_config.toml"
+permissions-accounts-config-file-enabled = false                  # passer à true post-TGE si besoin
+
+# -----------------------------------------------------------------------------
+# Sync / DB
+# -----------------------------------------------------------------------------
+sync-mode                  = "FULL"                               # validateur = full state
+sync-min-peers             = 1                                    # phase bootstrap (1 validateur)
+data-storage-format        = "BONSAI"                             # arbre Merkle Bonsai (perf+disque)
+bonsai-historical-block-limit = 512
+
+# -----------------------------------------------------------------------------
+# Transaction pool
+# -----------------------------------------------------------------------------
+tx-pool                    = "LAYERED"
+tx-pool-layer-max-capacity = 12_500_000
+tx-pool-blob-price-bump    = 100
+tx-pool-enable-save-restore = true
+
+# -----------------------------------------------------------------------------
+# Métriques (Prometheus)
+# -----------------------------------------------------------------------------
+metrics-enabled            = true
+metrics-host               = "127.0.0.1"
+metrics-port               = 9545
+metrics-category           = ["BLOCKCHAIN", "ETHEREUM", "EXECUTORS", "JVM", "NETWORK", "PEERS", "RPC", "SYNCHRONIZER", "TRANSACTION_POOL"]
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+logging                    = "INFO"
+# log-file géré par journald si lancé en systemd
+
+# -----------------------------------------------------------------------------
+# Sécurité — host allowlist (RPC)
+# -----------------------------------------------------------------------------
+host-allowlist             = ["localhost", "127.0.0.1"]
+nat-method                 = "NONE"
+
+# -----------------------------------------------------------------------------
+# Cache & performances JVM
+# -----------------------------------------------------------------------------
+# Recommandé via variable d'env BESU_OPTS :
+#   BESU_OPTS="-Xmx8g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+# Côté config Besu :
+cache-last-block-headers-preload-enabled = true
+
+# -----------------------------------------------------------------------------
+# Notes opérationnelles
+# -----------------------------------------------------------------------------
+# 1. La clé `node-private-key-file` doit être chiffrée AES-256 au repos et
+#    déchiffrée à la volée par un sidecar Vault ou KMS.
+# 2. L'adresse du validateur (= coinbase = destinataire des fees) est
+#    DÉRIVÉE de cette clé. Pour la connaître :
+#       besu --data-path=<path> public-key export-address
+#    → cette adresse doit être référencée par le keeper-fees côté FeeDistributor.
+# 3. Backups : `data-path` doit être inclus dans le snapshot horaire.
+#    Voir scripts/backup-keys.sh et scripts/setup-validator.sh.
+# 4. Health check :
+#    curl -X POST -H "Content-Type: application/json" \
+#      --data '{"jsonrpc":"2.0","method":"ibft_getValidatorsByBlockNumber","params":["latest"],"id":1}' \
+#      http://127.0.0.1:8545

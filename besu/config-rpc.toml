@@ -1,0 +1,93 @@
+# =============================================================================
+# WINTG Blockchain — Besu config (Nœud RPC public)
+# =============================================================================
+# Profil : full node EXPOSÉ derrière Cloudflare + Nginx pour servir les
+# requêtes RPC publiques. AUCUNE clé validateur.
+# Endpoints : https://chain.wkey.app (HTTPS) et wss://ws.wkey.app (WebSocket).
+# =============================================================================
+
+profile                    = "private"
+genesis-file               = "/etc/besu/genesis.json"
+data-path                  = "/var/lib/besu/data"
+network-id                 = 2280
+node-private-key-file      = "/etc/besu/keys/key"     # clé identifiant du nœud (pas validateur)
+identity                   = "wintg-rpc-01"
+
+target-gas-limit           = 30000000
+min-gas-price              = 1000000000
+
+# -----------------------------------------------------------------------------
+# P2P
+# -----------------------------------------------------------------------------
+p2p-enabled                = true
+p2p-host                   = "0.0.0.0"
+p2p-port                   = 30303
+discovery-enabled          = true
+max-peers                  = 100                      # plus de peers pour RPC public
+remote-connections-limit-enabled  = true
+remote-connections-max-percentage = 80
+static-nodes-file          = "/etc/besu/static-nodes.json"
+
+# -----------------------------------------------------------------------------
+# RPC HTTP public — derrière Nginx + Cloudflare
+# -----------------------------------------------------------------------------
+rpc-http-enabled           = true
+rpc-http-host              = "127.0.0.1"             # Nginx fait le proxy
+rpc-http-port              = 8545
+rpc-http-cors-origins      = ["*"]                    # restreint à wkey.app côté Nginx
+rpc-http-api               = ["ETH", "NET", "WEB3", "TXPOOL"]   # pas d'IBFT/ADMIN/DEBUG en public
+rpc-http-authentication-enabled = false               # auth gérée par Nginx + Cloudflare
+rpc-http-max-active-connections = 200
+rpc-http-max-batch-size    = 50
+rpc-gas-cap                = 100000000
+
+# -----------------------------------------------------------------------------
+# WebSocket
+# -----------------------------------------------------------------------------
+rpc-ws-enabled             = true
+rpc-ws-host                = "127.0.0.1"
+rpc-ws-port                = 8546
+rpc-ws-api                 = ["ETH", "NET", "WEB3", "TXPOOL"]
+rpc-ws-authentication-enabled = false
+rpc-ws-max-active-connections = 500
+
+# Limite anti-spam sur les filtres et logs
+rpc-max-logs-range         = 5000
+rpc-max-trace-filter-range = 1000
+
+# -----------------------------------------------------------------------------
+# Permissions
+# -----------------------------------------------------------------------------
+permissions-nodes-config-file-enabled = true
+permissions-nodes-config-file         = "/etc/besu/permissions_config.toml"
+
+# -----------------------------------------------------------------------------
+# Sync
+# -----------------------------------------------------------------------------
+sync-mode                  = "FULL"
+data-storage-format        = "BONSAI"
+bonsai-historical-block-limit = 1024                  # garder plus d'historique pour les RPC eth_getLogs
+
+# -----------------------------------------------------------------------------
+# Tx pool (RPC public peut recevoir beaucoup de tx)
+# -----------------------------------------------------------------------------
+tx-pool                    = "LAYERED"
+tx-pool-layer-max-capacity = 25_000_000
+tx-pool-enable-save-restore = true
+
+# -----------------------------------------------------------------------------
+# Métriques
+# -----------------------------------------------------------------------------
+metrics-enabled            = true
+metrics-host               = "127.0.0.1"
+metrics-port               = 9545
+metrics-category           = ["BLOCKCHAIN", "ETHEREUM", "JVM", "NETWORK", "PEERS", "RPC", "SYNCHRONIZER", "TRANSACTION_POOL"]
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+logging                    = "INFO"
+host-allowlist             = ["*"]                    # filtrage par Nginx + Cloudflare
+nat-method                 = "NONE"
+
+# JVM recommandé : BESU_OPTS="-Xmx12g -XX:+UseG1GC"

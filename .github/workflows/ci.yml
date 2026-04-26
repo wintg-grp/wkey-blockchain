@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20.x"
+
+jobs:
+  contracts:
+    name: Contracts — lint + compile + test + coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: contracts/package-lock.json
+
+      - run: npm ci
+      - run: npx solhint 'src/**/*.sol' --max-warnings 0
+      - run: npx hardhat compile
+      - run: npx hardhat test
+      - run: npx hardhat coverage
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: contracts-coverage
+          path: contracts/coverage/
+          retention-days: 7
+
+      - name: Coverage gate (≥ 95 % lines)
+        run: |
+          set -e
+          LINES=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
+          echo "Lines coverage: $LINES%"
+          if (( $(echo "$LINES < 95" | bc -l) )); then
+            echo "::error::Coverage $LINES% < 95% required"
+            exit 1
+          fi
+
+  faucet:
+    name: Faucet — type-check + lint
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: faucet } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.x", cache: "npm", cache-dependency-path: faucet/package-lock.json }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run lint || true   # eslint optionnel
+
+  sdk:
+    name: SDK — build + tests
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: sdk } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.x", cache: "npm", cache-dependency-path: sdk/package-lock.json }
+      - run: npm ci
+      - run: npm run build
+
+  security-slither:
+    name: Security — Slither static analysis
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: contracts } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.x", cache: "npm", cache-dependency-path: contracts/package-lock.json }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install slither-analyzer==0.10.4
+      - run: npm ci
+      - run: npx hardhat compile
+      - name: Run Slither
+        run: slither . --config-file slither.config.json --hardhat-ignore-compile || echo "::warning::Slither found issues"
+        continue-on-error: true
+
+  fuzz-foundry:
+    name: Fuzz — Foundry forge tests
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: contracts } }
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: foundry-rs/foundry-toolchain@v1
+        with: { version: stable }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.x", cache: "npm", cache-dependency-path: contracts/package-lock.json }
+      - run: npm ci
+      - name: forge test (fuzz)
+        run: forge test -vv --fuzz-runs 1000

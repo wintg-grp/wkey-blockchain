@@ -1,0 +1,98 @@
+# =============================================================================
+# Stack Monitoring WINTG : Prometheus + Grafana + Alertmanager + Loki
+# =============================================================================
+# - Prometheus scrape Besu (:9545/metrics) toutes les 15s
+# - Grafana affiche les dashboards
+# - Alertmanager → Telegram bot (clé d'API dans .env)
+# - Loki agrège les logs systemd (Besu + Nginx)
+#
+# Démarrage : docker compose up -d
+# UI Grafana : http://localhost:3000 (admin / cf .env)
+# =============================================================================
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: wintg-prometheus
+    restart: unless-stopped
+    user: "65534:65534"  # nobody
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./data/prometheus:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=90d
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: wintg-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3000:3000"
+    depends_on: [prometheus]
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: wintg-alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./alertmanager/config.yml:/etc/alertmanager/config.yml:ro
+      - ./data/alertmanager:/alertmanager
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_ALERT_CHAT_ID=${TELEGRAM_ALERT_CHAT_ID}
+    ports:
+      - "9093:9093"
+
+  loki:
+    image: grafana/loki:latest
+    container_name: wintg-loki
+    restart: unless-stopped
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - ./data/loki:/loki
+    command: -config.file=/etc/loki/config.yml
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: wintg-promtail
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/besu:/var/lib/besu:ro
+      - ./loki/promtail.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on: [loki]
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: wintg-node-exporter
+    restart: unless-stopped
+    pid: host
+    network_mode: host
+    volumes:
+      - /:/rootfs:ro,rslave
+    command:
+      - --path.rootfs=/rootfs
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+
+networks:
+  default:
+    name: wintg-monitoring

@@ -1,0 +1,33 @@
+{
+  "name": "@wintg/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WINTG smart contracts (vesting, treasury, fees) and tooling",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
+    "lint": "solhint 'src/**/*.sol' && eslint 'scripts/**/*.ts' 'test/**/*.ts'",
+    "format": "prettier --write '**/*.{ts,sol,json,md}'",
+    "generate-genesis": "ts-node scripts/generate-genesis.ts",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network wintgTestnet",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network wintgMainnet",
+    "verify": "hardhat run scripts/verify.ts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "@openzeppelin/merkle-tree": "^1.0.8",
+    "@types/node": "^20.11.0",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.11.0",
+    "hardhat": "^2.22.0",
+    "solhint": "^4.5.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
+  }
+}

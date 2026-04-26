@@ -1,0 +1,49 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: telegram
+  group_by: [alertname, severity]
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 2h
+  routes:
+    - match:
+        severity: critical
+      receiver: telegram-urgent
+      repeat_interval: 30m
+
+receivers:
+  - name: telegram
+    telegram_configs:
+      - bot_token: '{{ env "TELEGRAM_BOT_TOKEN" }}'
+        chat_id: 0
+        api_url: 'https://api.telegram.org'
+        parse_mode: HTML
+        message: |
+          <b>🟡 [{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}</b>
+          {{ range .Alerts }}
+          <b>Sev:</b> {{ .Labels.severity }}
+          <b>Node:</b> {{ .Labels.node }} ({{ .Labels.role }})
+          <b>Summary:</b> {{ .Annotations.summary }}
+          <b>Description:</b> {{ .Annotations.description }}
+          {{ end }}
+
+  - name: telegram-urgent
+    telegram_configs:
+      - bot_token: '{{ env "TELEGRAM_BOT_TOKEN" }}'
+        chat_id: 0
+        api_url: 'https://api.telegram.org'
+        parse_mode: HTML
+        message: |
+          <b>🚨🚨 [URGENT] {{ .GroupLabels.alertname }}</b>
+          {{ range .Alerts }}
+          <b>Node:</b> {{ .Labels.node }}
+          <b>Summary:</b> {{ .Annotations.summary }}
+          <b>Description:</b> {{ .Annotations.description }}
+          {{ end }}
+          ⚠️ Action immédiate requise.
+
+# Note : remplacer chat_id par TELEGRAM_ALERT_CHAT_ID via templating dynamique
+# (Alertmanager ne supporte pas env() partout — voir docs pour solution
+# alternative avec un wrapper de config par envsubst au démarrage).

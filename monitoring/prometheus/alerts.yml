@@ -1,0 +1,62 @@
+groups:
+  - name: wintg-besu
+    rules:
+      - alert: BesuDown
+        expr: up{job=~"besu-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Besu node {{ $labels.node }} is down"
+          description: "Le nœud {{ $labels.node }} ({{ $labels.role }}) ne répond plus depuis 1 minute."
+
+      - alert: BlockProductionStalled
+        expr: increase(besu_blockchain_height[2m]) == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Aucun bloc produit depuis 2 minutes (validateur {{ $labels.node }})"
+          description: "La hauteur de chaîne n'a pas augmenté. Vérifier le validateur."
+
+      - alert: SlowBlockTime
+        expr: rate(besu_blockchain_height[1m]) < 0.25
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Block time anormalement long"
+          description: "Moins de 0.25 bloc/sec sur 1 minute (cible : 0.33/s)."
+
+      - alert: PeerCountLow
+        expr: besu_network_peer_count < 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Peer count = 0 sur {{ $labels.node }}"
+          description: "Le nœud n'a aucun peer. Phase bootstrap solo OK, sinon problème réseau."
+
+      - alert: DiskAlmostFull
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disque < 15 % libre sur {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAM disponible < 10 % sur {{ $labels.instance }}"
+
+      - alert: HighGasUsage
+        expr: rate(besu_executors_pending_transactions[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Tx pool > 1000 tx/5min — possible spam ou trafic exceptionnel"

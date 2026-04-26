@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.x" }
+      - name: Install + build
+        run: |
+          cd contracts && npm ci && npx hardhat compile
+          cd ../sdk      && npm ci && npm run build
+          cd ../faucet   && npm ci && npm run build
+
+      - name: Generate changelog
+        run: |
+          PREV=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV" ]; then
+            git log --pretty=format:"- %s (%h)" "$PREV"..HEAD > CHANGELOG.md
+          else
+            git log --pretty=format:"- %s (%h)" > CHANGELOG.md
+          fi
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: CHANGELOG.md
+          files: |
+            contracts/artifacts/**/*.json
+            sdk/dist/**

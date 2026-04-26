@@ -1,0 +1,103 @@
+# =============================================================================
+# Blockscout — Block Explorer pour WINTG
+# =============================================================================
+# Stack : PostgreSQL + Redis + Blockscout backend + frontend.
+# Conçue pour pointer vers un nœud RPC WINTG via la variable WINTG_RPC_URL.
+#
+# Démarrage :
+#   cp .env.example .env
+#   # Éditer .env (DB password, WINTG_RPC_URL, domaine)
+#   docker compose up -d
+#   docker compose logs -f
+#
+# Indexation initiale : peut prendre plusieurs heures pour une chaîne mature.
+# =============================================================================
+
+x-blockscout-common: &blockscout-common
+  restart: unless-stopped
+  environment:
+    - DATABASE_URL=postgresql://${DB_USER:-blockscout}:${DB_PASSWORD}@db:5432/${DB_NAME:-blockscout}
+    - ETHEREUM_JSONRPC_VARIANT=besu
+    - ETHEREUM_JSONRPC_HTTP_URL=${WINTG_RPC_URL}
+    - ETHEREUM_JSONRPC_TRACE_URL=${WINTG_RPC_URL}
+    - ETHEREUM_JSONRPC_WS_URL=${WINTG_WS_URL}
+    - NETWORK=WINTG
+    - SUBNETWORK=${NETWORK_NAME:-Mainnet}
+    - CHAIN_ID=${CHAIN_ID:-2280}
+    - COIN=WTG
+    - COIN_NAME=WINTG
+    - COIN_SYMBOL=WTG
+    - LOGO=/images/wintg-logo.svg
+    - LOGO_FOOTER=/images/wintg-logo.svg
+    - PORT=4000
+    - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+    - REDIS_URL=redis://redis:6379/0
+    - DISABLE_EXCHANGE_RATES=true
+    - DISABLE_KNOWN_TOKENS=false
+    - SHOW_PRICE_CHART=false
+    - DISABLE_INDEXER=false
+    - DISABLE_WEBAPP=false
+    - SUPPORTED_CHAINS=[]
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: wintg-blockscout-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER:-blockscout}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME:-blockscout}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-blockscout}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: wintg-blockscout-redis
+    restart: unless-stopped
+    volumes:
+      - ./data/redis:/data
+    command: redis-server --appendonly yes
+
+  blockscout:
+    image: blockscout/blockscout:latest
+    container_name: wintg-blockscout
+    <<: *blockscout-common
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: >
+      sh -c "bin/blockscout eval 'Elixir.Explorer.ReleaseTasks.create_and_migrate()' &&
+             bin/blockscout start"
+
+  smart-contract-verifier:
+    image: ghcr.io/blockscout/smart-contract-verifier:latest
+    container_name: wintg-scv
+    restart: unless-stopped
+    environment:
+      - SMART_CONTRACT_VERIFIER__SERVER__HTTP__ADDR=0.0.0.0:8050
+      - SMART_CONTRACT_VERIFIER__SOLIDITY__ENABLED=true
+    ports:
+      - "8050:8050"
+
+  # Reverse proxy facultatif (mainnet uniquement — sinon Cloudflare suffit)
+  # nginx:
+  #   image: nginx:alpine
+  #   ports: ["80:80", "443:443"]
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - /etc/letsencrypt:/etc/letsencrypt:ro
+  #   depends_on: [blockscout]
+
+networks:
+  default:
+    name: wintg-explorer
