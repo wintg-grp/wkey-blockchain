@@ -1,9 +1,9 @@
 # =============================================================================
-# WINTG Blockchain — Hyperledger Besu config (validateur principal)
+# WINTG — Hyperledger Besu (validateur principal)
 # =============================================================================
-# Profile     : VALIDATEUR (rôle auto-déterminé par extraData + node key)
-# Consensus   : IBFT 2.0
-# Chain ID    : 2280 (mainnet) — surcharger via --network-id en testnet (22800)
+# Rôle        : VALIDATEUR (déterminé par extraData genesis + node key)
+# Consensus   : IBFT 2.0 (1s block time, finalité instantanée)
+# Chain ID    : 2280 mainnet / 22800 testnet (override via --network-id)
 # Besu cible  : 26.4.0+
 # =============================================================================
 #
@@ -44,8 +44,8 @@ identity                   = "wintg-validator-01"
 # -----------------------------------------------------------------------------
 # Bloc / gas / extra-data
 # -----------------------------------------------------------------------------
-target-gas-limit           = 30000000
-min-gas-price              = 1000000000                     # 1 gwei minimum (anti-spam)
+target-gas-limit           = 100000000                      # 100M, throughput gaming/dApp
+min-gas-price              = 3000000000                     # 3 gwei minimum (aligné BNB Chain)
 min-priority-fee           = 0
 miner-extra-data           = "0x57494e54472d76616c696461746f722d3031"   # "WINTG-validator-01" en ASCII
 
@@ -84,11 +84,11 @@ rpc-ws-enabled             = false
 graphql-http-enabled       = false
 
 # -----------------------------------------------------------------------------
-# Permissions (consortium IBFT 2.0)
+# Permissions (chaîne ouverte — n'importe quel node peut peer, n'importe qui
+# peut déployer un contrat ou envoyer une transaction)
 # -----------------------------------------------------------------------------
-permissions-nodes-config-file-enabled    = true
-permissions-nodes-config-file            = "/etc/besu/permissions_config.toml"
-permissions-accounts-config-file-enabled = false                  # passer à true post-TGE si besoin
+permissions-nodes-config-file-enabled    = false
+permissions-accounts-config-file-enabled = false
 
 # -----------------------------------------------------------------------------
 # Sync / DB

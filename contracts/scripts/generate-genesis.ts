@@ -361,7 +361,7 @@ function buildGenesis(opts: {
       cancunTime:        0,
       zeroBaseFee:       true,
       ibft2: {
-        blockperiodseconds:    3,
+        blockperiodseconds:    1,
         epochlength:           30000,
         requesttimeoutseconds: 4,
         blockreward:           "0x0",
@@ -369,7 +369,7 @@ function buildGenesis(opts: {
     },
     nonce:      "0x0",
     timestamp:  toBeHex(timestamp),
-    gasLimit:   "0x1c9c380", // 30 000 000
+    gasLimit:   "0x5f5e100", // 100 000 000 (high-throughput target for gaming/dApps)
     difficulty: "0x1",
     mixHash:    IBFT2_MIX_HASH,
     coinbase:   "0x0000000000000000000000000000000000000000",
