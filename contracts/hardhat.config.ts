@@ -7,8 +7,8 @@ import { resolve } from "node:path";
 dotenv.config({ path: resolve(__dirname, "..", ".env") });
 
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY ?? "";
-const RPC_MAINNET = process.env.RPC_URL_MAINNET ?? "https://chain.wkey.app";
-const RPC_TESTNET = process.env.RPC_URL_TESTNET ?? "https://testnet-rpc.wkey.app";
+const RPC_MAINNET = process.env.RPC_URL_MAINNET ?? "https://rpc.wintg.network";
+const RPC_TESTNET = process.env.RPC_URL_TESTNET ?? "https://testnet-rpc.wintg.network";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -80,16 +80,16 @@ const config: HardhatUserConfig = {
         network: "wintgMainnet",
         chainId: 2280,
         urls: {
-          apiURL: "https://explorer.wkey.app/api",
-          browserURL: "https://explorer.wkey.app",
+          apiURL: "https://scan.wintg.network/api",
+          browserURL: "https://scan.wintg.network",
         },
       },
       {
         network: "wintgTestnet",
         chainId: 22800,
         urls: {
-          apiURL: "https://testnet-explorer.wkey.app/api",
-          browserURL: "https://testnet-explorer.wkey.app",
+          apiURL: "https://testnet-scan.wintg.network/api",
+          browserURL: "https://testnet-scan.wintg.network",
         },
       },
     ],

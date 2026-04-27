@@ -3,27 +3,27 @@
   "chain": "WINTG",
   "icon": "wintg",
   "rpc": [
-    "https://testnet-rpc.wkey.app",
-    "wss://testnet-ws.wkey.app"
+    "https://testnet-rpc.wintg.network",
+    "wss://testnet-ws.wintg.network"
   ],
   "features": [
     { "name": "EIP155" },
     { "name": "EIP1559" }
   ],
-  "faucets": ["https://faucet.wkey.app"],
+  "faucets": ["https://faucet.wintg.network"],
   "nativeCurrency": {
     "name": "WINTG",
     "symbol": "WTG",
     "decimals": 18
   },
-  "infoURL": "https://wkey.app",
+  "infoURL": "https://wintg.network",
   "shortName": "wintg-testnet",
   "chainId": 22800,
   "networkId": 22800,
   "explorers": [
     {
-      "name": "Blockscout Testnet",
-      "url": "https://testnet-explorer.wkey.app",
+      "name": "WINTG Scan Testnet",
+      "url": "https://testnet-scan.wintg.network",
       "standard": "EIP3091"
     }
   ],

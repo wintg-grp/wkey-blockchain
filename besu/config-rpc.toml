@@ -3,7 +3,7 @@
 # =============================================================================
 # Profil : full node EXPOSÉ derrière Cloudflare + Nginx pour servir les
 # requêtes RPC publiques. AUCUNE clé validateur.
-# Endpoints : https://chain.wkey.app (HTTPS) et wss://ws.wkey.app (WebSocket).
+# Endpoints : https://rpc.wintg.network (HTTPS) et wss://ws.wintg.network (WebSocket).
 # =============================================================================
 
 profile                    = "private"
@@ -34,7 +34,7 @@ static-nodes-file          = "/etc/besu/static-nodes.json"
 rpc-http-enabled           = true
 rpc-http-host              = "127.0.0.1"             # Nginx fait le proxy
 rpc-http-port              = 8545
-rpc-http-cors-origins      = ["*"]                    # restreint à wkey.app côté Nginx
+rpc-http-cors-origins      = ["*"]                    # restreint à wintg.network côté Nginx
 rpc-http-api               = ["ETH", "NET", "WEB3", "TXPOOL"]   # pas d'IBFT/ADMIN/DEBUG en public
 rpc-http-authentication-enabled = false               # auth gérée par Nginx + Cloudflare
 rpc-http-max-active-connections = 200

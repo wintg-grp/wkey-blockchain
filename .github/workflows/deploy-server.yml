@@ -5,7 +5,7 @@ name: Deploy to server
 #
 # CONFIGURATION REQUISE (Settings → Secrets) :
 #   SSH_PRIVATE_KEY      : clé privée SSH avec accès root au serveur
-#   SERVER_HOST_VALIDATOR: IP/hostname du validateur (ex: chain.wkey.app)
+#   SERVER_HOST_VALIDATOR: IP/hostname du validateur (ex: rpc.wintg.network)
 #   SERVER_HOST_RPC      : IP/hostname du nœud RPC public
 #   SERVER_USER          : utilisateur SSH (typiquement "root")
 #   DEPLOY_BRANCH        : branche à déployer (typiquement "main")

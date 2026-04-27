@@ -1,10 +1,10 @@
 {
-  "name": "WINTG Mainnet",
+  "name": "WINTG",
   "chain": "WINTG",
   "icon": "wintg",
   "rpc": [
-    "https://chain.wkey.app",
-    "wss://ws.wkey.app"
+    "https://rpc.wintg.network",
+    "wss://ws.wintg.network"
   ],
   "features": [
     { "name": "EIP155" },
@@ -16,15 +16,15 @@
     "symbol": "WTG",
     "decimals": 18
   },
-  "infoURL": "https://wkey.app",
+  "infoURL": "https://wintg.network",
   "shortName": "wintg",
   "chainId": 2280,
   "networkId": 2280,
   "slip44": 2280,
   "explorers": [
     {
-      "name": "Blockscout",
-      "url": "https://explorer.wkey.app",
+      "name": "WINTG Scan",
+      "url": "https://scan.wintg.network",
       "standard": "EIP3091"
     }
   ],

@@ -22,7 +22,7 @@ docker build -t wintg-faucet .
 docker run -d -p 3030:3030 --env-file .env --name wintg-faucet wintg-faucet
 ```
 
-Reverse proxy Nginx + TLS Let's Encrypt à mettre devant. Déploiement type sur `faucet.wkey.app`.
+Reverse proxy Nginx + TLS Let's Encrypt à mettre devant. Déploiement type sur `faucet.wintg.network`.
 
 ## API
 

@@ -4,7 +4,7 @@ Ce guide explique comment faire **cohabiter** la blockchain WINTG (Besu)
 avec ton DirectAdmin existant sur un VPS Hostinger AlmaLinux 9.
 
 > **Idée** : DirectAdmin garde le contrôle de Nginx + SSL pour tous tes
-> sous-domaines. On ajoute juste `chain.wkey.app`, `explorer.wkey.app`
+> sous-domaines. On ajoute juste `rpc.wintg.network`, `scan.wintg.network`
 > etc. comme **domaines normaux** dans DirectAdmin, qui seront proxyés
 > en interne vers Besu (loopback localhost).
 
@@ -79,30 +79,30 @@ Connecte-toi à DirectAdmin : `https://srv1161785.hstgr.cloud:2222` (ou ton IP).
 
 Pour chaque sous-domaine, fais ces étapes :
 
-### 4.1 — Ajouter `testnet-rpc.wkey.app` comme domaine
+### 4.1 — Ajouter `testnet-rpc.wintg.network` comme domaine
 
-1. **Panneau utilisateur** (admin@wkey.app par défaut)
+1. **Panneau utilisateur** (admin@wintg.group par défaut)
 2. **Account Manager → Domain Setup** → **Add Another Domain**
-3. Nouveau domaine : `testnet-rpc.wkey.app`
+3. Nouveau domaine : `testnet-rpc.wintg.network`
 4. Use IP shared : ✅
 5. Allow SSL : ✅
 6. PHP : ❌ (non, c'est juste un proxy)
 7. **Create**
 
 Répète pour :
-- `testnet-ws.wkey.app`
-- `testnet-explorer.wkey.app`
-- `chain.wkey.app` (mainnet futur)
-- `ws.wkey.app`
-- `explorer.wkey.app`
-- `faucet.wkey.app`
+- `testnet-ws.wintg.network`
+- `testnet-scan.wintg.network`
+- `rpc.wintg.network` (mainnet futur)
+- `ws.wintg.network`
+- `scan.wintg.network`
+- `faucet.wintg.network`
 
 ### 4.2 — Activer SSL Let's Encrypt pour chacun
 
 Dans DirectAdmin, pour chaque domaine :
 1. **SSL Certificates**
 2. **Free & automatic certificate from Let's Encrypt**
-3. Inclure `www.testnet-rpc.wkey.app` ❌ (pas besoin pour RPC)
+3. Inclure `www.testnet-rpc.wintg.network` ❌ (pas besoin pour RPC)
 4. **Save**
 
 DirectAdmin génère le certificat automatiquement (peut prendre 1-2 min).
@@ -113,11 +113,11 @@ Pour chaque domaine, on doit dire à Nginx (managé par DirectAdmin) de
 proxyer vers Besu en interne. DirectAdmin permet d'ajouter des **custom
 configs** par domaine.
 
-**SSH sur le serveur** et fais ça pour `testnet-rpc.wkey.app` :
+**SSH sur le serveur** et fais ça pour `testnet-rpc.wintg.network` :
 
 ```bash
 # Localiser la conf Nginx du domaine (DirectAdmin l'a créée)
-DOMAIN="testnet-rpc.wkey.app"
+DOMAIN="testnet-rpc.wintg.network"
 USER="admin"  # ou ton user DA
 
 # Créer un custom snippet
@@ -150,10 +150,10 @@ cd /usr/local/directadmin/custombuild
 systemctl reload nginx
 ```
 
-Pour `testnet-ws.wkey.app` (WebSocket) :
+Pour `testnet-ws.wintg.network` (WebSocket) :
 
 ```bash
-DOMAIN="testnet-ws.wkey.app"
+DOMAIN="testnet-ws.wintg.network"
 cat > /usr/local/directadmin/data/users/$USER/nginx_custom/$DOMAIN/server_https.CUSTOM.pre <<'NGINX'
     location / {
         proxy_pass http://127.0.0.1:8546;
@@ -169,10 +169,10 @@ cd /usr/local/directadmin/custombuild && ./build rewrite_confs
 systemctl reload nginx
 ```
 
-Pour `testnet-explorer.wkey.app` (Blockscout, on l'installera après) :
+Pour `testnet-scan.wintg.network` (Blockscout, on l'installera après) :
 
 ```bash
-DOMAIN="testnet-explorer.wkey.app"
+DOMAIN="testnet-scan.wintg.network"
 cat > /usr/local/directadmin/data/users/$USER/nginx_custom/$DOMAIN/server_https.CUSTOM.pre <<'NGINX'
     location / {
         proxy_pass http://127.0.0.1:4000;
@@ -217,13 +217,13 @@ Une fois DNS propagé (5-30 min après config) :
 
 ```bash
 # Depuis ton PC local
-curl -X POST https://testnet-rpc.wkey.app \
+curl -X POST https://testnet-rpc.wintg.network \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 # Attendu : {"jsonrpc":"2.0","id":1,"result":"0x5910"}  (0x5910 = 22800 testnet)
 
 # Le bloc augmente toutes les 3s
-curl -X POST https://testnet-rpc.wkey.app \
+curl -X POST https://testnet-rpc.wintg.network \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
 ```
@@ -238,10 +238,10 @@ Réseau personnalisé :
 | Champ | Valeur |
 |---|---|
 | Network Name | WINTG Testnet |
-| RPC URL | `https://testnet-rpc.wkey.app` |
+| RPC URL | `https://testnet-rpc.wintg.network` |
 | Chain ID | `22800` |
 | Symbol | `WTG` |
-| Block Explorer | `https://testnet-explorer.wkey.app` |
+| Block Explorer | `https://testnet-scan.wintg.network` |
 
 Importer un compte test : la **Hardhat account 0** (clé connue, **NE PAS UTILISER EN MAINNET**) :
 - Address : `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`
@@ -260,7 +260,7 @@ cd C:\wintg-blockchain\contracts
 
 # .env doit pointer vers ton testnet
 cat > ../.env <<'EOF'
-RPC_URL_TESTNET=https://testnet-rpc.wkey.app
+RPC_URL_TESTNET=https://testnet-rpc.wintg.network
 DEPLOYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 TREASURY_SIGNERS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 TREASURY_THRESHOLD=1
@@ -276,7 +276,7 @@ Adresses sauvegardées dans `contracts/deployments/wintgTestnet-local.json`.
 
 ---
 
-## 8. (Optionnel) Installer Blockscout pour `testnet-explorer.wkey.app`
+## 8. (Optionnel) Installer Blockscout pour `testnet-scan.wintg.network`
 
 ```bash
 ssh root@72.61.231.11
@@ -302,7 +302,7 @@ docker compose up -d
 docker compose logs -f blockscout      # attendre l'indexation, ~5 min
 ```
 
-À la fin, `https://testnet-explorer.wkey.app` affiche tes blocs et transactions.
+À la fin, `https://testnet-scan.wintg.network` affiche tes blocs et transactions.
 
 ---
 
@@ -334,7 +334,7 @@ sudo journalctl -u besu -f
 
 ## ❓ Troubleshooting
 
-### "Connection refused" sur `testnet-rpc.wkey.app`
+### "Connection refused" sur `testnet-rpc.wintg.network`
 
 ```bash
 # Sur le serveur
@@ -346,7 +346,7 @@ sudo systemctl status nginx       # Nginx tourne ?
 
 ### DirectAdmin refuse d'ajouter le sous-domaine
 
-→ Vérifier que `wkey.app` est ajouté comme **domaine principal** dans DirectAdmin d'abord, puis les sous-domaines.
+→ Vérifier que `wintg.network` est ajouté comme **domaine principal** dans DirectAdmin d'abord, puis les sous-domaines.
 
 ### Besu OOM (Out Of Memory)
 
@@ -368,15 +368,15 @@ sudo systemctl daemon-reload && sudo systemctl restart besu
 ## 📋 Checklist mise en ligne testnet
 
 ```
-[ ] DNS testnet-rpc.wkey.app propagé (dig +short testnet-rpc.wkey.app)
-[ ] DNS testnet-ws.wkey.app propagé
-[ ] DNS testnet-explorer.wkey.app propagé
+[ ] DNS testnet-rpc.wintg.network propagé (dig +short testnet-rpc.wintg.network)
+[ ] DNS testnet-ws.wintg.network propagé
+[ ] DNS testnet-scan.wintg.network propagé
 [ ] Besu installé via install-besu-almalinux.sh
 [ ] Besu produit des blocs (eth_blockNumber augmente)
 [ ] Sous-domaines ajoutés dans DirectAdmin
 [ ] SSL Let's Encrypt actif sur chaque sous-domaine
 [ ] Reverse proxy Nginx custom configuré pour chaque
-[ ] testnet-rpc.wkey.app répond (curl -X POST eth_chainId)
+[ ] testnet-rpc.wintg.network répond (curl -X POST eth_chainId)
 [ ] MetaMask se connecte
 [ ] Smart contracts déployés
 [ ] Blockscout indexé (si installé)
@@ -387,5 +387,5 @@ sudo systemctl daemon-reload && sudo systemctl restart besu
 
 > Pour passer en **mainnet**, refaire les mêmes étapes avec :
 > - `bash install-besu-almalinux.sh mainnet validator`
-> - Sous-domaines : `chain.wkey.app`, `ws.wkey.app`, `explorer.wkey.app`
+> - Sous-domaines : `rpc.wintg.network`, `ws.wintg.network`, `scan.wintg.network`
 > - **Mais avant** : audit externe + bug bounty + génération wallets de prod sécurisés.

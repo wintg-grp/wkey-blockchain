@@ -22,7 +22,7 @@ Ce document liste **tout ce qu'il faut faire** pour passer de "code sur ton PC"
 ┌────────────────────────▼─────────────────────────────┐
 │  PHASE 2 — INFRASTRUCTURE (2-4 heures)               │
 │  ✓ Acheter 1 serveur cloud (~50€/mois)               │
-│  ✓ Configurer DNS sur wkey.app                       │
+│  ✓ Configurer DNS sur wintg.network                       │
 │  ✓ Lancer les scripts de setup                       │
 │  ✓ Vérifier que la chaîne produit des blocs          │
 └────────────────────────┬─────────────────────────────┘
@@ -122,7 +122,7 @@ Lors de la création :
 
 Une fois créé, note l'**IP publique** (ex: `49.13.156.45`).
 
-## Étape 2.2 — Configurer DNS chez ton registrar wkey.app
+## Étape 2.2 — Configurer DNS chez ton registrar wintg.network
 
 Il faut pointer plusieurs sous-domaines vers l'IP du serveur. Dans ton panneau DNS (Namecheap, Gandi, Cloudflare, etc.), ajoute ces enregistrements `A` :
 
@@ -139,7 +139,7 @@ Il faut pointer plusieurs sous-domaines vers l'IP du serveur. Dans ton panneau D
 
 > 💡 Pour la production, met les services derrière **Cloudflare** :
 > 1. Crée un compte sur [cloudflare.com](https://cloudflare.com)
-> 2. Add Site → `wkey.app` → Free plan
+> 2. Add Site → `wintg.network` → Free plan
 > 3. Cloudflare te donne 2 nameservers (ex: `daisy.ns.cloudflare.com`)
 > 4. Chez ton registrar, change les nameservers vers ceux de Cloudflare
 > 5. Dans Cloudflare DNS, ajoute les enregistrements ci-dessus avec proxy activé (orange cloud)
@@ -267,11 +267,11 @@ curl -X POST -H "Content-Type: application/json" \
 
 ```bash
 sudo ./scripts/setup-rpc.sh mainnet
-sudo certbot --nginx -d chain.wkey.app -d ws.wkey.app \
-  --non-interactive --agree-tos -m admin@wkey.app
+sudo certbot --nginx -d rpc.wintg.network -d ws.wintg.network \
+  --non-interactive --agree-tos -m admin@wintg.group
 ```
 
-À ce stade, **`https://chain.wkey.app`** doit répondre.
+À ce stade, **`https://rpc.wintg.network`** doit répondre.
 
 ### F. Déployer les smart contracts
 
@@ -295,11 +295,11 @@ Sur le serveur :
 ```bash
 cd /opt/wintg/explorer
 cp .env.example .env
-# Éditer .env avec WINTG_RPC_URL=https://chain.wkey.app
+# Éditer .env avec WINTG_RPC_URL=https://rpc.wintg.network
 docker compose up -d
 ```
 
-Attendre ~5 min pour l'indexation initiale, puis vérifier `https://explorer.wkey.app`.
+Attendre ~5 min pour l'indexation initiale, puis vérifier `https://scan.wintg.network`.
 
 ## Étape 2.5 — Stack monitoring
 
@@ -327,7 +327,7 @@ Grafana sur `http://serveur-IP:3000` (admin / cf .env). Dashboard `WINTG — Bes
    ```bash
    sudo ./scripts/setup-validator.sh testnet
    ```
-3. Configure DNS pour `testnet-rpc.wkey.app` etc.
+3. Configure DNS pour `testnet-rpc.wintg.network` etc.
 4. Déploie les contrats sur testnet :
    ```bash
    npm run deploy:testnet
@@ -359,7 +359,7 @@ Demande des devis. Code4rena est plus rapide et moins cher mais moins thorough q
 1. Définir la date du TGE (au moins 30 jours après la fin de l'audit)
 2. Régénérer le genesis avec les **vraies adresses** des bénéficiaires
 3. Préparer la communication :
-   - Site web `wkey.app` (à construire après)
+   - Site web `wintg.network` (à construire après)
    - Tweet d'annonce
    - Discord / Telegram communautaire
 4. Soumettre WINTG à [chainlist.org](https://github.com/ethereum-lists/chains) (PR avec les fichiers `chainlist/*.json`)
@@ -417,12 +417,12 @@ PHASE 2 — Infrastructure
 [ ] Serveur validateur principal commandé
 [ ] Serveur hot standby commandé
 [ ] Serveur RPC public commandé
-[ ] DNS configuré sur wkey.app
+[ ] DNS configuré sur wintg.network
 [ ] Cloudflare configuré (optionnel)
 [ ] Setup-validator.sh exécuté avec succès
 [ ] Setup-standby.sh exécuté avec succès
 [ ] Setup-rpc.sh exécuté avec succès
-[ ] HTTPS opérationnel sur chain.wkey.app
+[ ] HTTPS opérationnel sur rpc.wintg.network
 [ ] Blockscout indexant
 [ ] Monitoring + alertes Telegram fonctionnels
 
@@ -435,7 +435,7 @@ PHASE 3 — Production-ready
 [ ] Wallets de production générés et sauvegardés (3 lieux)
 [ ] Multisig Treasury 2-of-3 configuré
 [ ] Genesis final avec vraies adresses
-[ ] Site web wkey.app prêt
+[ ] Site web wintg.network prêt
 [ ] Communication crise préparée
 [ ] WINTG soumis à chainlist.org
 

@@ -40,11 +40,11 @@ const ZERO = "0x0000000000000000000000000000000000000000";
  * Les adresses sont remplies après déploiement (`contracts/deployments/wintgMainnet.json`).
  */
 export const MAINNET: WintgNetwork = {
-  name: "WINTG Mainnet",
+  name: "WINTG",
   chainId: 2280,
-  rpcUrl: "https://chain.wkey.app",
-  wsUrl: "wss://ws.wkey.app",
-  explorerUrl: "https://explorer.wkey.app",
+  rpcUrl: "https://rpc.wintg.network",
+  wsUrl: "wss://ws.wintg.network",
+  explorerUrl: "https://scan.wintg.network",
   symbol: "WTG",
   contracts: {
     WTGToken: ZERO,
@@ -76,9 +76,9 @@ export const TESTNET: WintgNetwork = {
   ...MAINNET,
   name: "WINTG Testnet",
   chainId: 22800,
-  rpcUrl: "https://testnet-rpc.wkey.app",
-  wsUrl: "wss://testnet-ws.wkey.app",
-  explorerUrl: "https://testnet-explorer.wkey.app",
+  rpcUrl: "https://testnet-rpc.wintg.network",
+  wsUrl: "wss://testnet-ws.wintg.network",
+  explorerUrl: "https://testnet-scan.wintg.network",
 };
 
 export const NETWORKS = { mainnet: MAINNET, testnet: TESTNET } as const;

@@ -22,7 +22,7 @@ L'explorer écoute sur `http://localhost:4000`. Indexation initiale : 30 min –
 
 ## Configuration recommandée pour mainnet
 
-- **Reverse proxy Nginx + TLS Let's Encrypt** sur `explorer.wkey.app`
+- **Reverse proxy Nginx + TLS Let's Encrypt** sur `scan.wintg.network`
 - **PostgreSQL** : 4 GB RAM minimum, SSD NVMe, 100 GB+
 - **Backups** : `pg_dump` quotidien chiffré (voir `scripts/backup-blockscout.sh` à produire)
 

@@ -35,7 +35,7 @@ Toute personne ou organisation invitée à rejoindre le set des validateurs WINT
 
 ```bash
 ssh root@validator-XX.example.com
-git clone https://github.com/wintg/wintg-blockchain.git /opt/wintg
+git clone https://github.com/wintg-grp/wkey-blockchain.git /opt/wintg
 cd /opt/wintg
 sudo ./scripts/setup-validator.sh mainnet
 ```

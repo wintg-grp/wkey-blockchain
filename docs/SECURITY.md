@@ -164,7 +164,7 @@ Recommandation forte :
 
 ## Reporting de vulnérabilités
 
-📧 `security@wkey.app` (PGP key sur [keybase.io/wkey](https://keybase.io/wkey))
+📧 `security@wintg.group` (PGP key sur [keybase.io/wkey](https://keybase.io/wkey))
 
 ⚠️ **Ne pas ouvrir d'issue publique sur GitHub.**
 

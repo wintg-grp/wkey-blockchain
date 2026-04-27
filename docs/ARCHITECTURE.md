@@ -71,7 +71,7 @@ WINTG est une blockchain Layer 1 EVM-compatible (Hyperledger Besu, IBFT 2.0) con
 
 ```
 1. Utilisateur signe une tx via wallet (MetaMask / WKey)
-2. Tx envoyée à https://chain.wkey.app (RPC public)
+2. Tx envoyée à https://rpc.wintg.network (RPC public)
 3. Nœud RPC public propage via P2P → validateur primaire
 4. Validateur primaire :
    a. Inclut la tx dans son bloc proposé

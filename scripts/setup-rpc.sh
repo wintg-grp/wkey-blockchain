@@ -6,8 +6,8 @@ set -euo pipefail
 
 NETWORK="${1:-testnet}"
 case "$NETWORK" in
-  mainnet) NETWORK_ID=2280; DOMAIN="chain.wkey.app"; WS_DOMAIN="ws.wkey.app" ;;
-  testnet) NETWORK_ID=22800; DOMAIN="testnet-rpc.wkey.app"; WS_DOMAIN="testnet-ws.wkey.app" ;;
+  mainnet) NETWORK_ID=2280; DOMAIN="rpc.wintg.network"; WS_DOMAIN="ws.wintg.network" ;;
+  testnet) NETWORK_ID=22800; DOMAIN="testnet-rpc.wintg.network"; WS_DOMAIN="testnet-ws.wintg.network" ;;
   *) echo "Usage: $0 [testnet|mainnet]" >&2; exit 1 ;;
 esac
 
@@ -94,7 +94,7 @@ rm -f /etc/nginx/sites-enabled/default
 nginx -t
 
 # Certbot (HTTP-01) — à exécuter manuellement la 1ère fois si DNS pas pointé :
-# certbot --nginx -d ${DOMAIN} -d ${WS_DOMAIN} --non-interactive --agree-tos -m admin@wkey.app
+# certbot --nginx -d ${DOMAIN} -d ${WS_DOMAIN} --non-interactive --agree-tos -m admin@wintg.group
 
 systemctl restart nginx
 systemctl restart besu

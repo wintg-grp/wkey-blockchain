@@ -6,28 +6,28 @@
 
 | Service | Endpoint |
 |---|---|
-| RPC HTTPS | `https://chain.wkey.app` |
-| WebSocket | `wss://ws.wkey.app` |
-| Block Explorer | `https://explorer.wkey.app` |
-| API Blockscout | `https://explorer.wkey.app/api` |
+| RPC HTTPS | `https://rpc.wintg.network` |
+| WebSocket | `wss://ws.wintg.network` |
+| Block Explorer | `https://scan.wintg.network` |
+| API Blockscout | `https://scan.wintg.network/api` |
 
 ### Testnet (Chain ID `22800`)
 
 | Service | Endpoint |
 |---|---|
-| RPC HTTPS | `https://testnet-rpc.wkey.app` |
-| WebSocket | `wss://testnet-ws.wkey.app` |
-| Block Explorer | `https://testnet-explorer.wkey.app` |
-| Faucet | `https://faucet.wkey.app` |
+| RPC HTTPS | `https://testnet-rpc.wintg.network` |
+| WebSocket | `wss://testnet-ws.wintg.network` |
+| Block Explorer | `https://testnet-scan.wintg.network` |
+| Faucet | `https://faucet.wintg.network` |
 
 ## Configuration MetaMask
 
 ```
 Network Name : WINTG Mainnet
-RPC URL      : https://chain.wkey.app
+RPC URL      : https://rpc.wintg.network
 Chain ID     : 2280
 Symbol       : WTG
-Block Explorer: https://explorer.wkey.app
+Block Explorer: https://scan.wintg.network
 ```
 
 Ajout en 1 clic : **Coming soon** sur [chainlist.org](https://chainlist.org).
@@ -51,24 +51,24 @@ WINTG expose les namespaces standards :
 # Hauteur de chaîne
 curl -X POST -H "Content-Type: application/json" \
   --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' \
-  https://chain.wkey.app
+  https://rpc.wintg.network
 
 # Solde d'un wallet
 curl -X POST -H "Content-Type: application/json" \
   --data '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xVotreAdresse","latest"],"id":1}' \
-  https://chain.wkey.app
+  https://rpc.wintg.network
 
 # Chain ID
 curl -X POST -H "Content-Type: application/json" \
   --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
-  https://chain.wkey.app
+  https://rpc.wintg.network
 ```
 
 ### WebSocket
 
 ```javascript
 import { ethers } from "ethers";
-const ws = new ethers.WebSocketProvider("wss://ws.wkey.app");
+const ws = new ethers.WebSocketProvider("wss://ws.wintg.network");
 ws.on("block", (n) => console.log("Nouveau bloc :", n));
 ```
 
@@ -82,24 +82,24 @@ ws.on("block", (n) => console.log("Nouveau bloc :", n));
 | `trace_filter` range | 1 000 blocs max | erreur RPC |
 | WebSocket connections | 500 simultanées | TCP reset |
 
-Pour des limites supérieures (entreprise) : `partners@wkey.app`.
+Pour des limites supérieures (entreprise) : `partners@wintg.group`.
 
 ## API Blockscout
 
-Compatible Etherscan API. Documentation complète : [`/api-docs`](https://explorer.wkey.app/api-docs).
+Compatible Etherscan API. Documentation complète : [`/api-docs`](https://scan.wintg.network/api-docs).
 
 ### Exemples
 
 ```bash
 # Liste des transactions d'une adresse
-curl "https://explorer.wkey.app/api?module=account&action=txlist&address=0x..."
+curl "https://scan.wintg.network/api?module=account&action=txlist&address=0x..."
 
 # Solde token (ERC-20)
-curl "https://explorer.wkey.app/api?module=account&action=tokenbalance&contractaddress=0xWWTG&address=0x..."
+curl "https://scan.wintg.network/api?module=account&action=tokenbalance&contractaddress=0xWWTG&address=0x..."
 
 # Vérification de contrat
 curl -X POST -F "addressHash=0x..." -F "name=MyContract" -F "compilerVersion=0.8.24" -F "sourceCode=..." \
-  "https://explorer.wkey.app/api?module=contract&action=verify"
+  "https://scan.wintg.network/api?module=contract&action=verify"
 ```
 
 ## Smart contracts canoniques
@@ -127,7 +127,7 @@ Voir `contracts/deployments/wintgMainnet.json` pour la liste à jour.
 ## Faucet (testnet uniquement)
 
 ```bash
-curl -X POST https://faucet.wkey.app/api/drip \
+curl -X POST https://faucet.wintg.network/api/drip \
   -H "Content-Type: application/json" \
   -d '{"address": "0xVotreAdresse", "captcha": "<hcaptcha-token>"}'
 ```
@@ -138,7 +138,7 @@ curl -X POST https://faucet.wkey.app/api/drip \
 
 ## Statut & monitoring public
 
-📊 [`https://status.wkey.app`](https://status.wkey.app) (à produire)
+📊 [`https://status.wintg.network`](https://status.wintg.network) (à produire)
 
 - Uptime mainnet/testnet
 - Block time courant

@@ -10,7 +10,7 @@
 #   ou
 #   sudo ./scripts/wkey-deploy.sh [mainnet|testnet] [validator|standby|rpc]
 #
-# Pré-requis : DNS configuré (chain.wkey.app, etc. → IP du serveur)
+# Pré-requis : DNS configuré (rpc.wintg.network, etc. → IP du serveur)
 # =============================================================================
 set -euo pipefail
 
@@ -170,9 +170,9 @@ case "$ROLE" in
     echo "  - En cas de panne primaire : /opt/wintg/scripts/promote-standby.sh"
     ;;
   rpc)
-    DOMAIN=$([ "$NETWORK" = "mainnet" ] && echo "chain.wkey.app" || echo "testnet-rpc.wkey.app")
+    DOMAIN=$([ "$NETWORK" = "mainnet" ] && echo "rpc.wintg.network" || echo "testnet-rpc.wintg.network")
     echo "  - Configurer TLS (1ère fois) :"
-    echo "      sudo certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m admin@wkey.app"
+    echo "      sudo certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m admin@wintg.group"
     echo "  - Lancer Blockscout :"
     echo "      cd /opt/wintg/explorer && cp .env.example .env"
     echo "      docker compose up -d"

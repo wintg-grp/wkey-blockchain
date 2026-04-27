@@ -40,11 +40,11 @@
 
 | Hostname | Type | Spec | Usage |
 |---|---|---|---|
-| `validator-01.wkey.app` | CCX23 | 8 vCPU / 32 GB / 240 GB SSD | Validateur primaire |
-| `standby-01.wkey.app` | CCX23 | 8 vCPU / 32 GB / 240 GB SSD | Hot standby |
-| `rpc-01.wkey.app` | CCX33 | 8 vCPU / 32 GB / 480 GB SSD | RPC public |
-| `explorer.wkey.app` | CX52 | 4 vCPU / 16 GB / 240 GB SSD | Blockscout |
-| `monitor.wkey.app` | CX22 | 2 vCPU / 4 GB / 80 GB SSD | Prometheus + Grafana |
+| `validator-01.wintg.network` | CCX23 | 8 vCPU / 32 GB / 240 GB SSD | Validateur primaire |
+| `standby-01.wintg.network` | CCX23 | 8 vCPU / 32 GB / 240 GB SSD | Hot standby |
+| `rpc-01.wintg.network` | CCX33 | 8 vCPU / 32 GB / 480 GB SSD | RPC public |
+| `scan.wintg.network` | CX52 | 4 vCPU / 16 GB / 240 GB SSD | Blockscout |
+| `monitor.wintg.network` | CX22 | 2 vCPU / 4 GB / 80 GB SSD | Prometheus + Grafana |
 
 OS : Ubuntu 22.04 LTS minimal. Accès SSH par clé uniquement.
 
@@ -102,8 +102,8 @@ console.log('total alloc :', Object.values(g.alloc).reduce((s, a) => s + BigInt(
 ### B.1 Validateur primaire
 
 ```bash
-ssh root@validator-01.wkey.app
-git clone https://github.com/wintg/wintg-blockchain.git /opt/wintg
+ssh root@validator-01.wintg.network
+git clone https://github.com/wintg-grp/wkey-blockchain.git /opt/wintg
 cd /opt/wintg
 sudo ./scripts/setup-validator.sh mainnet
 ```
@@ -129,7 +129,7 @@ sudo journalctl -u besu -f
 ### B.2 Hot standby
 
 ```bash
-ssh root@standby-01.wkey.app
+ssh root@standby-01.wintg.network
 git clone ... && cd /opt/wintg
 sudo ./scripts/setup-standby.sh mainnet
 ```
@@ -139,25 +139,25 @@ Vérifier sync : `eth_syncing` doit passer de `true` à `false` en quelques heur
 ### B.3 Nœud RPC public
 
 ```bash
-ssh root@rpc-01.wkey.app
+ssh root@rpc-01.wintg.network
 sudo ./scripts/setup-rpc.sh mainnet
 
 # Première fois — Certbot HTTPS
-sudo certbot --nginx -d chain.wkey.app -d ws.wkey.app \
-  --non-interactive --agree-tos -m admin@wkey.app
+sudo certbot --nginx -d rpc.wintg.network -d ws.wintg.network \
+  --non-interactive --agree-tos -m admin@wintg.group
 ```
 
 ### B.4 Monitoring
 
 ```bash
-ssh root@monitor.wkey.app
+ssh root@monitor.wintg.network
 git clone ... && cd /opt/wintg/monitoring
 cp .env.example .env
 # Éditer .env (passwords + Telegram token)
 docker compose up -d
 ```
 
-UI Grafana : `http://monitor.wkey.app:3000` (admin / cf .env).
+UI Grafana : `http://monitor.wintg.network:3000` (admin / cf .env).
 
 ## Phase C — Smart contracts
 
@@ -240,10 +240,10 @@ npx ts-node scripts/build-merkle-airdrop.ts < airdrop_list.csv > merkle.json
 - Annoncer chainID, RPC, explorer sur le site / Twitter / Discord
 - Configurer MetaMask :
   - Network Name: `WINTG Mainnet`
-  - RPC URL: `https://chain.wkey.app`
+  - RPC URL: `https://rpc.wintg.network`
   - Chain ID: `2280`
   - Symbol: `WTG`
-  - Block Explorer: `https://explorer.wkey.app`
+  - Block Explorer: `https://scan.wintg.network`
 
 ## Procédures d'urgence
 

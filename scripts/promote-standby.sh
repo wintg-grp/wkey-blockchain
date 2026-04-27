@@ -19,7 +19,7 @@
 # =============================================================================
 set -euo pipefail
 
-PRIMARY_RPC="${PRIMARY_RPC:-https://chain.wkey.app}"
+PRIMARY_RPC="${PRIMARY_RPC:-https://rpc.wintg.network}"
 LOCAL_RPC="http://127.0.0.1:8545"
 
 echo "▶ Vérification de l'état du validateur primaire..."
@@ -63,7 +63,7 @@ Procédure :
      sudo cp besu/genesis.json /etc/besu/genesis.json
   4. Redémarrer :
      sudo systemctl start besu
-  5. Mettre à jour les DNS pour pointer chain.wkey.app vers ce nœud.
+  5. Mettre à jour les DNS pour pointer rpc.wintg.network vers ce nœud.
 
   ⚠️  L'historique de la chaîne pré-bascule est PERDU.
       C'est l'avertissement assumé de la phase bootstrap.

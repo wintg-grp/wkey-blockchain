@@ -10,7 +10,7 @@
  *   - Cooldown par adresse (24 h)
  *   - Cooldown par IP (24 h)
  *   - Helmet (HTTP security headers)
- *   - CORS restrictif (faucet.wkey.app origin)
+ *   - CORS restrictif (faucet.wintg.network origin)
  *   - Wallet faucet pré-funded depuis Ecosystem multisig
  */
 
@@ -25,10 +25,10 @@ import axios from "axios";
 dotenv.config();
 
 const PORT = parseInt(process.env.PORT ?? "3030", 10);
-const RPC_URL = process.env.RPC_URL ?? "https://testnet-rpc.wkey.app";
+const RPC_URL = process.env.RPC_URL ?? "https://testnet-rpc.wintg.network";
 const FAUCET_PRIVATE_KEY = process.env.FAUCET_PRIVATE_KEY ?? "";
 const HCAPTCHA_SECRET = process.env.HCAPTCHA_SECRET ?? "";
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "https://faucet.wkey.app")
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "https://faucet.wintg.network")
   .split(",").map((s) => s.trim());
 
 const DRIP_AMOUNT_WTG = BigInt(process.env.DRIP_AMOUNT_WTG ?? "100");
@@ -188,7 +188,7 @@ app.post("/api/drip", dripLimit, async (req: Request, res: Response, next: NextF
       ok: true,
       txHash: tx.hash,
       amountWTG: DRIP_AMOUNT_WTG.toString(),
-      explorer: `https://testnet-explorer.wkey.app/tx/${tx.hash}`,
+      explorer: `https://testnet-scan.wintg.network/tx/${tx.hash}`,
     });
   } catch (err) {
     next(err);
