@@ -1,0 +1,9 @@
+WINTG Network
+Copyright 2024-2026 WINTG Group <contact@wintg.group>
+
+This product includes software developed by WINTG Group.
+
+This product depends on software developed by The Hyperledger Foundation
+(Hyperledger Besu) and OpenZeppelin (smart contract libraries), both
+distributed under the Apache License 2.0 / MIT License respectively.
+See the upstream project pages for full attribution.

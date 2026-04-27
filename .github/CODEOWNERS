@@ -1,0 +1,25 @@
+# CODEOWNERS for wintg-grp/wkey-blockchain
+#
+# These users / teams are automatically requested for review on any PR
+# touching the matching files. Last matching pattern wins.
+#
+# Email contact for any code-ownership questions: contact@wintg.group
+
+# Default — all files
+*                                @wintg-grp/maintainers
+
+# Smart contracts (audit-critical)
+/contracts/src/**                @wintg-grp/contracts-team
+/contracts/scripts/**            @wintg-grp/contracts-team
+
+# Chain configuration (consensus-critical)
+/besu/**                         @wintg-grp/infra-team
+/scripts/**                      @wintg-grp/infra-team
+
+# SDK and dev tooling
+/sdk/**                          @wintg-grp/sdk-team
+
+# Docs and governance
+/docs/**                         @wintg-grp/docs-team
+/SECURITY.md                     @wintg-grp/security-team
+/CONTRIBUTING.md                 @wintg-grp/maintainers

@@ -2,7 +2,18 @@
   "name": "@wintg/sdk",
   "version": "1.0.0",
   "description": "Official TypeScript SDK for the WINTG blockchain",
-  "license": "MIT",
+  "license": "Apache-2.0",
+  "author": "WINTG Group <contact@wintg.group>",
+  "homepage": "https://wintg.network",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wintg-grp/wkey-blockchain.git",
+    "directory": "sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/wintg-grp/wkey-blockchain/issues",
+    "email": "contact@wintg.group"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist", "README.md"],
@@ -12,7 +23,7 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "engines": { "node": ">=20" },
-  "keywords": ["wintg", "ethereum", "evm", "blockchain", "togo", "uemoa"],
+  "keywords": ["wintg", "ethereum", "evm", "blockchain", "africa", "uemoa", "gaming", "dapps"],
   "peerDependencies": {
     "ethers": ">=6.0.0"
   },

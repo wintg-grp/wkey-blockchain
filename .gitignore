@@ -1,9 +1,11 @@
 # =============================================================================
-# IDE / Editor (Claude Code, VS Code, JetBrains)
+# IDE / Editor
 # =============================================================================
-.claude/
 .idea/
 .vscode/
+.claude/
+*.swp
+*.swo
 
 # =============================================================================
 # Secrets — JAMAIS commiter
@@ -14,7 +16,10 @@
 *.key
 *.pem
 keystore/
+.keystore/
 secrets/
+wallets.encrypted.json
+*.encrypted.json
 
 # =============================================================================
 # Node / TypeScript
@@ -42,13 +47,15 @@ broadcast/
 foundry.lock
 
 # =============================================================================
-# Besu — données runtime (mais on garde besu/genesis.json + besu/config.toml)
+# Besu — données runtime (on garde besu/genesis.json + besu/config.toml)
 # =============================================================================
 besu/data/
 besu/keys/
 besu/logs/
 besu/auth.toml
 besu/static-nodes.local.json
+besu/data-mainnet/
+besu/data-testnet/
 
 # =============================================================================
 # Blockscout / monitoring (volumes Docker)

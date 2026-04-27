@@ -2,8 +2,19 @@
   "name": "@wintg/contracts",
   "version": "0.1.0",
   "private": true,
-  "description": "WINTG smart contracts (vesting, treasury, fees) and tooling",
-  "license": "MIT",
+  "description": "WINTG smart contracts — token, vesting, treasury, fees, factories, validators, governance",
+  "license": "Apache-2.0",
+  "author": "WINTG Group <contact@wintg.group>",
+  "homepage": "https://wintg.network",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wintg-grp/wkey-blockchain.git",
+    "directory": "contracts"
+  },
+  "bugs": {
+    "url": "https://github.com/wintg-grp/wkey-blockchain/issues",
+    "email": "contact@wintg.group"
+  },
   "engines": {
     "node": ">=20"
   },

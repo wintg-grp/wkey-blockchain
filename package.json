@@ -1,0 +1,46 @@
+{
+  "name": "wintg-blockchain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WINTG — Layer 1 EVM-compatible blockchain for Africa. Hyperledger Besu, IBFT 2.0, 1s blocks, 100M gas, gaming + dApp friendly.",
+  "license": "Apache-2.0",
+  "author": "WINTG Group <contact@wintg.group>",
+  "homepage": "https://wintg.network",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wintg-grp/wkey-blockchain.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wintg-grp/wkey-blockchain/issues",
+    "email": "contact@wintg.group"
+  },
+  "keywords": [
+    "wintg",
+    "blockchain",
+    "layer1",
+    "evm",
+    "besu",
+    "ibft",
+    "africa",
+    "uemoa",
+    "togo",
+    "gaming",
+    "dapps",
+    "nft"
+  ],
+  "workspaces": [
+    "contracts",
+    "sdk",
+    "faucet"
+  ],
+  "scripts": {
+    "build": "npm --workspace contracts run build && npm --workspace sdk run build",
+    "test": "npm --workspace contracts run test",
+    "coverage": "npm --workspace contracts run coverage",
+    "lint": "npm --workspace contracts run lint",
+    "generate-genesis": "npm --workspace contracts run generate-genesis"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

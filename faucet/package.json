@@ -2,7 +2,14 @@
   "name": "@wintg/faucet",
   "version": "1.0.0",
   "description": "WINTG testnet faucet — distribute WTG to developers",
-  "license": "MIT",
+  "license": "Apache-2.0",
+  "author": "WINTG Group <contact@wintg.group>",
+  "homepage": "https://wintg.network",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wintg-grp/wkey-blockchain.git",
+    "directory": "faucet"
+  },
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
