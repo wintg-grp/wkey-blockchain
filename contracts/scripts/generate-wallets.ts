@@ -78,7 +78,14 @@ function encrypt(plaintext: string, passphrase: string): {
   ciphertext: string; salt: string; nonce: string; tag: string;
 } {
   const salt = randomBytes(SALT_LEN);
-  const key = scryptSync(passphrase, salt, KEY_LEN, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P });
+  // scrypt with N=2^17, r=8, p=1 needs 128 * r * N = 128 MB. Node's default
+  // maxmem is 32 MB, so we have to bump it explicitly.
+  const key = scryptSync(passphrase, salt, KEY_LEN, {
+    N: SCRYPT_N,
+    r: SCRYPT_R,
+    p: SCRYPT_P,
+    maxmem: 256 * 1024 * 1024,
+  });
   const nonce = randomBytes(NONCE_LEN);
   const cipher = createCipheriv("aes-256-gcm", key, nonce);
   const ct = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
