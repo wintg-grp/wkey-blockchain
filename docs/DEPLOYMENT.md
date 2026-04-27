@@ -1,258 +1,254 @@
-# Guide de déploiement WINTG
+# Deployment runbook
 
-## Vue d'ensemble — séquence complète
+Step-by-step instructions to deploy WINTG **mainnet and testnet on the
+same VPS** from a clean state. Replaces the older single-network
+runbook entirely.
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│ PHASE A — PRÉPARATION                                        │
-│  1. Provisionner les serveurs (Hetzner / OVH)                │
-│  2. Générer les wallets (deployer, validateurs, multisig)    │
-│  3. Régénérer le genesis avec les bonnes adresses            │
-└────────────────────────────┬─────────────────────────────────┘
-                             │
-┌────────────────────────────▼─────────────────────────────────┐
-│ PHASE B — INFRASTRUCTURE                                      │
-│  4. Bootstrap validateur primaire (./scripts/setup-validator.sh)│
-│  5. Bootstrap hot standby (./scripts/setup-standby.sh)       │
-│  6. Bootstrap nœud RPC public (./scripts/setup-rpc.sh)       │
-│  7. Stack monitoring (Prometheus / Grafana / Alertmanager)   │
-└────────────────────────────┬─────────────────────────────────┘
-                             │
-┌────────────────────────────▼─────────────────────────────────┐
-│ PHASE C — SMART CONTRACTS                                    │
-│  8. Compiler + tester (≥ 95 % coverage)                       │
-│  9. Audit Slither / Mythril / Echidna                         │
-│ 10. Déployer (npm run deploy:testnet → mainnet)              │
-│ 11. Vérifier les sources sur Blockscout                       │
-└────────────────────────────┬─────────────────────────────────┘
-                             │
-┌────────────────────────────▼─────────────────────────────────┐
-│ PHASE D — TGE                                                │
-│ 12. Set allocations Public/Private (lots) → finalize          │
-│ 13. Publish Merkle root Airdrop                               │
-│ 14. Communication publique                                    │
-└──────────────────────────────────────────────────────────────┘
-```
+## What you'll need
 
-## Phase A — Préparation
+- An AlmaLinux 9 / Rocky 9 / RHEL 9 VPS with root SSH access
+  (8 vCPU, 16 GB RAM, 200 GB SSD recommended). Ubuntu 22.04 also
+  works — the installer detects which OS it's on.
+- The domain `wintg.network` already pointed to the server's public IP
+  for these subdomains:
+  - `rpc.wintg.network`
+  - `ws.wintg.network`
+  - `scan.wintg.network`
+  - `testnet-rpc.wintg.network`
+  - `testnet-ws.wintg.network`
+  - `faucet.wintg.network`
+- Node.js 20+ on **your local machine** (laptop), where you'll
+  generate wallets and the genesis files.
 
-### A.1 Serveurs (Hetzner ou OVH recommandé pour latence Afrique de l'Ouest)
-
-| Hostname | Type | Spec | Usage |
-|---|---|---|---|
-| `validator-01.wintg.network` | CCX23 | 8 vCPU / 32 GB / 240 GB SSD | Validateur primaire |
-| `standby-01.wintg.network` | CCX23 | 8 vCPU / 32 GB / 240 GB SSD | Hot standby |
-| `rpc-01.wintg.network` | CCX33 | 8 vCPU / 32 GB / 480 GB SSD | RPC public |
-| `scan.wintg.network` | CX52 | 4 vCPU / 16 GB / 240 GB SSD | Blockscout |
-| `monitor.wintg.network` | CX22 | 2 vCPU / 4 GB / 80 GB SSD | Prometheus + Grafana |
-
-OS : Ubuntu 22.04 LTS minimal. Accès SSH par clé uniquement.
-
-### A.2 Génération des wallets
-
-Sur une **machine offline** :
+## Step 1 — Generate wallets locally (your laptop)
 
 ```bash
-cd contracts
-npx ts-node scripts/generate-wallets.ts
-# → wallets.encrypted.json (chiffré AES-256-GCM)
-```
-
-11 wallets générés : `deployer`, `validator-primary`, `validator-standby`,
-3× `treasury-signer`, 4× `*-beneficiary`, `validator-pool`.
-
-> **Sauvegarder** `wallets.encrypted.json` dans 3 emplacements distincts.
-> La passphrase n'est PAS stockée — la perdre = perdre les fonds.
-
-### A.3 Variables d'environnement
-
-```bash
-cp .env.example .env
-# Remplir :
-#   DEPLOYER_ADDRESS, DEPLOYER_PRIVATE_KEY
-#   VALIDATORS=<addr_validateur_primaire>
-#   LIQUIDITY_MULTISIG_ADDRESS=<addr>
-#   TREASURY_SIGNERS=<addr1>,<addr2>,<addr3>
-#   TREASURY_THRESHOLD=2
-```
-
-### A.4 Régénérer le genesis
-
-```bash
-cd contracts
+git clone https://github.com/wintg-grp/wkey-blockchain.git
+cd wkey-blockchain/contracts
 npm install
-npm run generate-genesis -- --network mainnet
-# → besu/genesis.json mis à jour avec les vraies adresses
+npx ts-node scripts/generate-wallets.ts
 ```
 
-Vérifier :
+You'll be prompted for a passphrase (≥ 16 chars). Keep this safe —
+it's the only key to the encrypted wallet bundle.
 
-```bash
-node -e "
-const g = require('./besu/genesis.json');
-console.log('chainId :', g.config.chainId);
-console.log('total alloc :', Object.values(g.alloc).reduce((s, a) => s + BigInt(a.balance), 0n) / 10n**18n, 'WTG');
-"
-# → chainId : 2280
-# → total alloc : 1000000000 WTG
+The script prints a list of addresses to stdout. Copy the ones you'll
+need:
+
+- `deployer`
+- `validator-primary` (and `validator-standby` if you plan a hot
+  standby — recommended)
+- `treasury-signer-1` … `treasury-signer-5` (the 5-of-N for the
+  WINTGTreasury multisig)
+
+The encrypted bundle is written to `contracts/wallets.encrypted.json`.
+Move a copy to a secure location (USB drive, password manager
+attachment) — losing it means losing the wallets.
+
+## Step 2 — Generate the genesis files (your laptop)
+
+Create `.env` at the repo root with the addresses you just got:
+
+```env
+DEPLOYER_ADDRESS=0x...                       # the deployer address
+VALIDATORS=0x...,0x...                       # one CSV — both validator addresses
+                                             # (if no standby yet, list just the primary)
+LIQUIDITY_MULTISIG_ADDRESS=0x...             # for now, deployer is fine; replace later
 ```
 
-## Phase B — Infrastructure
-
-### B.1 Validateur primaire
-
-```bash
-ssh root@validator-01.wintg.network
-git clone https://github.com/wintg-grp/wkey-blockchain.git /opt/wintg
-cd /opt/wintg
-sudo ./scripts/setup-validator.sh mainnet
-```
-
-Le script :
-
-- installe Java 21, Besu 26.4.0, fail2ban, ufw
-- crée user `besu`
-- copie configs dans `/etc/besu/`
-- génère la clé validateur (si absente)
-- crée le service systemd
-- ouvre les ports 22, 30303 (TCP/UDP)
-- démarre Besu
-
-Vérifier :
-
-```bash
-sudo systemctl status besu
-sudo journalctl -u besu -f
-./scripts/health-check.sh
-```
-
-### B.2 Hot standby
-
-```bash
-ssh root@standby-01.wintg.network
-git clone ... && cd /opt/wintg
-sudo ./scripts/setup-standby.sh mainnet
-```
-
-Vérifier sync : `eth_syncing` doit passer de `true` à `false` en quelques heures.
-
-### B.3 Nœud RPC public
-
-```bash
-ssh root@rpc-01.wintg.network
-sudo ./scripts/setup-rpc.sh mainnet
-
-# Première fois — Certbot HTTPS
-sudo certbot --nginx -d rpc.wintg.network -d ws.wintg.network \
-  --non-interactive --agree-tos -m admin@wintg.group
-```
-
-### B.4 Monitoring
-
-```bash
-ssh root@monitor.wintg.network
-git clone ... && cd /opt/wintg/monitoring
-cp .env.example .env
-# Éditer .env (passwords + Telegram token)
-docker compose up -d
-```
-
-UI Grafana : `http://monitor.wintg.network:3000` (admin / cf .env).
-
-## Phase C — Smart contracts
-
-### C.1 Tests + couverture
+Generate both genesis files in one shot:
 
 ```bash
 cd contracts
-npm test
-npm run coverage
-# Cible : ≥ 95 % statements et branches
+./scripts/generate-genesis-dual.sh
 ```
 
-### C.2 Audit local
+That produces:
+
+```
+besu/genesis.mainnet.json
+besu/genesis.testnet.json
+```
+
+Commit and push both files:
 
 ```bash
-# Slither
-docker run -v $PWD:/src trailofbits/slither /src
-
-# Mythril
-docker run -v $PWD:/src mythril/myth analyze /src/contracts/src/**/*.sol
-
-# Echidna (fuzzing 24h)
-echidna-test contracts/src/vesting/VestingVault.sol --config echidna.yml
+cd ..
+git add besu/genesis.mainnet.json besu/genesis.testnet.json
+git commit -m "chore: regenerate mainnet + testnet genesis"
+git push
 ```
 
-### C.3 Déploiement
+## Step 3 — Wipe the old install on the server
+
+SSH into the VPS and clean any previous WINTG install:
 
 ```bash
-# Dry-run d'abord
-npx hardhat run scripts/deploy.ts --network wintgMainnet -- --dry-run
-
-# Réel
-npm run deploy:mainnet
+ssh root@<SERVER_IP>
+cd /tmp
+git clone https://github.com/wintg-grp/wkey-blockchain.git
+cd wkey-blockchain
+sudo ./scripts/cleanup-server.sh
 ```
 
-Le script vérifie que les adresses CREATE matchent les pré-allocations
-genesis. En cas de mismatch : abort.
+The script:
 
-Output :
+- Saves the previous `/etc/besu` to `/root/wintg-cleanup-backup-<ts>/`
+- Stops and disables every `besu*` systemd service
+- Wipes `/etc/besu`, `/var/lib/besu`, `/var/log/besu`
+- Brings down any Blockscout / WINTG Docker stack
+- Removes `/opt/wintg*`
+- Best-effort firewall rule cleanup
 
-```
-deployments/wintgMainnet.json   ← adresses + args constructeur
-deployments/wintgMainnet.md     ← rapport markdown
-```
+## Step 4 — Install both networks
 
-### C.4 Vérification Blockscout
-
-Si `BLOCKSCOUT_API_URL` est défini, `deploy.ts` vérifie automatiquement.
-Sinon :
+Pull the latest code (with the new genesis files) and run the dual
+installer:
 
 ```bash
-npx hardhat run scripts/verify.ts --network wintgMainnet
+mkdir -p /opt
+cd /opt
+git clone https://github.com/wintg-grp/wkey-blockchain.git
+cd wkey-blockchain
+sudo ./scripts/install-dual.sh
 ```
 
-## Phase D — TGE
+The installer:
 
-### D.1 Allocations Public/Private Sale
+1. Installs Java 21 + dependencies
+2. Downloads Besu 26.4.0
+3. Creates the `besu` user
+4. Lays out `/etc/besu/{mainnet,testnet}/` and
+   `/var/lib/besu/{mainnet,testnet}/`
+5. Generates fresh validator keys for each network
+6. Installs the systemd units (`besu-mainnet`, `besu-testnet`)
+7. Opens P2P ports in CSF / firewalld / UFW
+8. Starts both nodes
+
+⚠️ **Important** — the validator addresses generated by the installer
+must match the ones baked into your genesis files' `extraData`. If
+they don't (e.g. you generated genesis on your laptop with different
+keys), regenerate the genesis using the addresses shown by the
+installer, push, and re-run the installer.
+
+You can also pre-stage your validator key file by placing it at
+`/etc/besu/<network>/keys/key` (mode 600, owner besu) before running
+the installer. The script won't overwrite an existing key.
+
+## Step 5 — Configure the reverse proxy
+
+The repo ships a snippet for the OpenLiteSpeed vhost template used by
+DirectAdmin:
 
 ```bash
-# Lots de buyers (CSV : address,amount_wtg)
-npx hardhat run scripts/set-public-sale-allocations.ts --network wintgMainnet
-npx hardhat run scripts/set-private-sale-allocations.ts --network wintgMainnet
-
-# Une fois toutes les allocations entrées :
-# (transaction multisig Treasury → finalize)
+cd /opt/wkey-blockchain
+sudo cat scripts/da-templates/openlitespeed_vhost.conf.snippet \
+  >> /usr/local/directadmin/data/templates/custom/openlitespeed_vhost.conf
+echo "action=rewrite&value=httpd" >> /usr/local/directadmin/data/task.queue
+sudo /usr/local/directadmin/dataskq d
+sudo systemctl reload lsws
 ```
 
-### D.2 Airdrop Merkle root
+For each WINTG subdomain:
+
+1. In DirectAdmin → Subdomain Management, add the subdomain.
+2. Under SSL Certificates, request a Let's Encrypt SAN cert covering
+   all six subdomains.
+
+If you're on Ubuntu without DirectAdmin, configure Nginx as a
+reverse proxy by hand (the snippet's port mapping still applies).
+
+## Step 6 — Smoke-check both networks
 
 ```bash
-# Générer la merkle tree à partir d'un CSV
-npx ts-node scripts/build-merkle-airdrop.ts < airdrop_list.csv > merkle.json
+# Mainnet
+curl -s -X POST -H "Content-Type: application/json" \
+  --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' \
+  http://127.0.0.1:8545 | jq
 
-# Déployer le root (set au constructeur, donc à la déploy phase C.3)
+# Testnet
+curl -s -X POST -H "Content-Type: application/json" \
+  --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' \
+  http://127.0.0.1:8547 | jq
 ```
 
-### D.3 Communication
+Both should return a block number that increases every second.
 
-- Publier `besu/genesis.json` final + adresses sur GitHub
-- Annoncer chainID, RPC, explorer sur le site / Twitter / Discord
-- Configurer MetaMask :
-  - Network Name: `WINTG Mainnet`
-  - RPC URL: `https://rpc.wintg.network`
-  - Chain ID: `2280`
-  - Symbol: `WTG`
-  - Block Explorer: `https://scan.wintg.network`
+```bash
+# Validator address for each network (must match the genesis extraData)
+sudo cat /etc/besu/mainnet/keys/address
+sudo cat /etc/besu/testnet/keys/address
+```
 
-## Procédures d'urgence
+```bash
+# Logs
+journalctl -u besu-mainnet -f
+journalctl -u besu-testnet -f
+```
 
-| Incident | Procédure |
-|---|---|
-| Validateur primaire down | `./scripts/promote-standby.sh` (sur standby) |
-| Disque plein | Étendre LVM / volume cloud → redémarrer Besu |
-| Compromission clé validateur | Rotation immédiate via vote IBFT (phase 2+) ; phase 1 = scénario catastrophe (régénérer genesis) |
-| Drain Treasury | Pause + révoquer signataires multisig |
-| Bug critique smart contract | Pause via `Pausable` (déjà sur tous les contrats) → patch → migrate |
+## Step 7 — Deploy the smart contracts (your laptop)
 
-Voir [`SECURITY.md`](./SECURITY.md) pour les détails complets.
+Once `https://rpc.wintg.network` and `https://testnet-rpc.wintg.network`
+respond, deploy the contract suite:
+
+```bash
+cd contracts
+DEPLOYER_PRIVATE_KEY=0x...your-deployer-key... \
+npx hardhat run scripts/deploy.ts --network wintgTestnet
+
+# Same for mainnet, when you're confident
+DEPLOYER_PRIVATE_KEY=0x... \
+npx hardhat run scripts/deploy.ts --network wintgMainnet
+```
+
+The deployment writes addresses to `contracts/deployments/<network>.json`.
+Commit those for posterity.
+
+## Step 8 — Bring up the explorer
+
+The Blockscout assembly lives in `explorer/`. From the server:
+
+```bash
+cd /opt/wkey-blockchain/explorer
+# Edit .env with the right RPC + DB password
+docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+```
+
+This should expose the explorer on `127.0.0.1:3000` (frontend) and
+`127.0.0.1:4000` (API). The OLS template entries route them at
+`https://scan.wintg.network`.
+
+## Step 9 — Bring up the testnet faucet
+
+```bash
+cd /opt/wkey-blockchain/faucet
+npm install
+# Configure .env with FAUCET_PRIVATE_KEY (has WTG to give out) and HCAPTCHA keys
+npm run build
+# Run as a systemd unit or behind PM2 — port 4001 by default
+```
+
+`faucet.wintg.network` proxies to that port.
+
+## Day-2 operations
+
+- Logs: `journalctl -u besu-mainnet -f` (or testnet)
+- Restart: `sudo systemctl restart besu-mainnet`
+- Health: `curl http://127.0.0.1:8545 ...` as in step 6
+- Backups: snapshot `/var/lib/besu/{mainnet,testnet}/` and
+  `/etc/besu/{mainnet,testnet}/keys/` regularly. The keys are the
+  irreplaceable bit.
+
+## Recovery
+
+If a network gets stuck, the recovery procedure is:
+
+1. `sudo systemctl stop besu-<net>`
+2. Inspect logs: `journalctl -u besu-<net> -n 200`
+3. If state is corrupted: `rm -rf /var/lib/besu/<net>` (KEEP the keys
+   directory!), then start again — Besu re-syncs from peers.
+4. If a single-validator network has halted (no quorum), a full
+   restart usually resumes block production immediately because there
+   are no peers to coordinate with.
+
+For everything else, email `validators@wintg.group`.
