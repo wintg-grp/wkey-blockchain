@@ -1,0 +1,109 @@
+# =============================================================================
+# WINTG Mainnet — Hyperledger Besu validator configuration
+# =============================================================================
+# Network    : WINTG mainnet
+# Chain ID   : 2280
+# Consensus  : IBFT 2.0, 1 s block time, instant finality
+# Besu       : 26.4.0+
+#
+# Ports allocated to mainnet on a shared host (so testnet can run alongside):
+#   P2P   30303   (TCP + UDP, public)
+#   RPC   8545    (loopback only — front by reverse proxy)
+#   WS    8546    (loopback only — front by reverse proxy)
+#   metrics 9545  (loopback only — Prometheus scrape)
+# =============================================================================
+
+profile                    = "private"
+
+# -----------------------------------------------------------------------------
+# Network identity
+# -----------------------------------------------------------------------------
+genesis-file               = "/etc/besu/mainnet/genesis.json"
+data-path                  = "/var/lib/besu/mainnet"
+network-id                 = 2280
+node-private-key-file      = "/etc/besu/mainnet/keys/key"
+identity                   = "wintg-mainnet-01"
+
+# -----------------------------------------------------------------------------
+# Block / gas / extra-data
+# -----------------------------------------------------------------------------
+target-gas-limit           = 100000000
+min-gas-price              = 3000000000        # 3 gwei
+min-priority-fee           = 0
+miner-extra-data           = "0x57494e54472d6d61696e6e65742d3031"   # "WINTG-mainnet-01"
+
+# -----------------------------------------------------------------------------
+# P2P / discovery
+# -----------------------------------------------------------------------------
+p2p-enabled                = true
+p2p-host                   = "0.0.0.0"
+p2p-port                   = 30303
+p2p-interface              = "0.0.0.0"
+discovery-enabled          = true
+max-peers                  = 50
+remote-connections-limit-enabled  = true
+remote-connections-max-percentage = 60
+
+static-nodes-file          = "/etc/besu/mainnet/static-nodes.json"
+
+# -----------------------------------------------------------------------------
+# RPC / API (loopback only — public exposure goes through OLS reverse proxy)
+# -----------------------------------------------------------------------------
+rpc-http-enabled           = true
+rpc-http-host              = "0.0.0.0"
+rpc-http-port              = 8545
+rpc-http-cors-origins      = ["*"]
+rpc-http-api               = ["ETH", "NET", "WEB3", "IBFT"]
+
+rpc-ws-enabled             = true
+rpc-ws-host                = "0.0.0.0"
+rpc-ws-port                = 8546
+rpc-ws-api                 = ["ETH", "NET", "WEB3", "IBFT"]
+
+graphql-http-enabled       = false
+
+# -----------------------------------------------------------------------------
+# Permissioning — fully open
+# -----------------------------------------------------------------------------
+permissions-nodes-config-file-enabled    = false
+permissions-accounts-config-file-enabled = false
+
+# -----------------------------------------------------------------------------
+# Sync / DB
+# -----------------------------------------------------------------------------
+sync-mode                     = "FULL"
+sync-min-peers                = 1
+data-storage-format           = "BONSAI"
+bonsai-historical-block-limit = 512
+
+# -----------------------------------------------------------------------------
+# Transaction pool
+# -----------------------------------------------------------------------------
+tx-pool                       = "LAYERED"
+tx-pool-layer-max-capacity    = 12_500_000
+tx-pool-blob-price-bump       = 100
+tx-pool-enable-save-restore   = true
+
+# -----------------------------------------------------------------------------
+# Metrics (Prometheus)
+# -----------------------------------------------------------------------------
+metrics-enabled               = true
+metrics-host                  = "127.0.0.1"
+metrics-port                  = 9545
+metrics-category              = ["BLOCKCHAIN", "ETHEREUM", "EXECUTORS", "JVM", "NETWORK", "PEERS", "RPC", "SYNCHRONIZER", "TRANSACTION_POOL"]
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+logging                    = "INFO"
+
+# -----------------------------------------------------------------------------
+# Security — RPC host allowlist
+# -----------------------------------------------------------------------------
+host-allowlist             = ["*"]
+nat-method                 = "NONE"
+
+# -----------------------------------------------------------------------------
+# Cache
+# -----------------------------------------------------------------------------
+cache-last-block-headers-preload-enabled = true

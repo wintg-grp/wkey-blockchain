@@ -127,7 +127,11 @@ function parseCli(): Cli {
     fatal(`--prefund-amount doit être positif (reçu : ${prefundAmountWtg})`);
   }
 
-  const defaultOut = resolve(__dirname, "..", "..", "besu", "genesis.json");
+  // Default output path mirrors the network: besu/genesis.<network>.json
+  const defaultOut = resolve(
+    __dirname, "..", "..", "besu",
+    `genesis.${network}.json`,
+  );
   const out = values.out ? resolve(String(values.out)) : defaultOut;
 
   return {

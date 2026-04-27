@@ -1,0 +1,109 @@
+# =============================================================================
+# WINTG Testnet — Hyperledger Besu validator configuration
+# =============================================================================
+# Network    : WINTG testnet
+# Chain ID   : 22800
+# Consensus  : IBFT 2.0, 1 s block time, instant finality
+# Besu       : 26.4.0+
+#
+# Ports allocated to testnet (distinct from mainnet on the same host):
+#   P2P   30304   (TCP + UDP, public)
+#   RPC   8547    (loopback only — front by reverse proxy)
+#   WS    8548    (loopback only — front by reverse proxy)
+#   metrics 9546  (loopback only — Prometheus scrape)
+# =============================================================================
+
+profile                    = "private"
+
+# -----------------------------------------------------------------------------
+# Network identity
+# -----------------------------------------------------------------------------
+genesis-file               = "/etc/besu/testnet/genesis.json"
+data-path                  = "/var/lib/besu/testnet"
+network-id                 = 22800
+node-private-key-file      = "/etc/besu/testnet/keys/key"
+identity                   = "wintg-testnet-01"
+
+# -----------------------------------------------------------------------------
+# Block / gas / extra-data
+# -----------------------------------------------------------------------------
+target-gas-limit           = 100000000
+min-gas-price              = 3000000000        # 3 gwei
+min-priority-fee           = 0
+miner-extra-data           = "0x57494e54472d746573746e65742d3031"   # "WINTG-testnet-01"
+
+# -----------------------------------------------------------------------------
+# P2P / discovery
+# -----------------------------------------------------------------------------
+p2p-enabled                = true
+p2p-host                   = "0.0.0.0"
+p2p-port                   = 30304
+p2p-interface              = "0.0.0.0"
+discovery-enabled          = true
+max-peers                  = 50
+remote-connections-limit-enabled  = true
+remote-connections-max-percentage = 60
+
+static-nodes-file          = "/etc/besu/testnet/static-nodes.json"
+
+# -----------------------------------------------------------------------------
+# RPC / API
+# -----------------------------------------------------------------------------
+rpc-http-enabled           = true
+rpc-http-host              = "0.0.0.0"
+rpc-http-port              = 8547
+rpc-http-cors-origins      = ["*"]
+rpc-http-api               = ["ETH", "NET", "WEB3", "IBFT"]
+
+rpc-ws-enabled             = true
+rpc-ws-host                = "0.0.0.0"
+rpc-ws-port                = 8548
+rpc-ws-api                 = ["ETH", "NET", "WEB3", "IBFT"]
+
+graphql-http-enabled       = false
+
+# -----------------------------------------------------------------------------
+# Permissioning — fully open
+# -----------------------------------------------------------------------------
+permissions-nodes-config-file-enabled    = false
+permissions-accounts-config-file-enabled = false
+
+# -----------------------------------------------------------------------------
+# Sync / DB
+# -----------------------------------------------------------------------------
+sync-mode                     = "FULL"
+sync-min-peers                = 1
+data-storage-format           = "BONSAI"
+bonsai-historical-block-limit = 512
+
+# -----------------------------------------------------------------------------
+# Transaction pool
+# -----------------------------------------------------------------------------
+tx-pool                       = "LAYERED"
+tx-pool-layer-max-capacity    = 12_500_000
+tx-pool-blob-price-bump       = 100
+tx-pool-enable-save-restore   = true
+
+# -----------------------------------------------------------------------------
+# Metrics (Prometheus)
+# -----------------------------------------------------------------------------
+metrics-enabled               = true
+metrics-host                  = "127.0.0.1"
+metrics-port                  = 9546
+metrics-category              = ["BLOCKCHAIN", "ETHEREUM", "EXECUTORS", "JVM", "NETWORK", "PEERS", "RPC", "SYNCHRONIZER", "TRANSACTION_POOL"]
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+logging                    = "INFO"
+
+# -----------------------------------------------------------------------------
+# Security — RPC host allowlist
+# -----------------------------------------------------------------------------
+host-allowlist             = ["*"]
+nat-method                 = "NONE"
+
+# -----------------------------------------------------------------------------
+# Cache
+# -----------------------------------------------------------------------------
+cache-last-block-headers-preload-enabled = true
