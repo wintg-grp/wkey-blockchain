@@ -370,11 +370,11 @@ describe("Coverage — VestingVault.end()", () => {
 // =============================================================================
 describe("Coverage — FeeDistributor.pendingDistribution", () => {
   it("pendingDistribution view", async () => {
-    const [owner, t, v] = await ethers.getSigners();
+    const [owner, t, v, c] = await ethers.getSigners();
     const Burn = await ethers.getContractFactory("BurnContract");
     const burn = await Burn.deploy();
     const Distrib = await ethers.getContractFactory("FeeDistributor");
-    const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress());
+    const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress(), c.address);
     expect(await d.pendingDistribution()).to.equal(0n);
   });
 });

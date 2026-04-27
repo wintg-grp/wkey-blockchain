@@ -5,30 +5,46 @@ import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
+interface IPriceFeed {
+    function latestRoundData()
+        external view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
+    function decimals() external view returns (uint8);
+}
+
 /**
  * @title  ValidatorRegistry
  * @author WINTG Team
- * @notice Registre on-chain des validateurs WINTG. Sert deux objectifs :
+ * @notice On-chain registry of WINTG validators. Two responsibilities:
  *
- *           1. **Candidatures publiques** : n'importe qui peut postuler en
- *              déposant un bond en WTG natif (`applyAsValidator`). Le bond
- *              est conservé tant que la candidature est pending et restitué
- *              en cas de rejet.
+ *           1. Public candidacy: anyone can apply by posting a USD-denominated
+ *              bond paid in native WTG. The required bond is set in USD by
+ *              governance and converted on-the-fly using a WTG/USD price feed.
  *
- *           2. **Annuaire des validateurs actifs** : métadonnées (nom, organisation,
- *              site, PGP, localisation, enode) consultables par les block explorers
- *              et les dApps.
+ *           2. Public directory of active validators: name, organisation,
+ *              website, PGP, location, enode — readable by explorers and dApps.
  *
- *         Pipeline :
- *           postuler   → applyAsValidator()  : status = Pending
- *           approuver  → approveCandidate()  : status = Approved
- *                        l'admin appelle ensuite ibft_proposeValidatorVote(true, addr)
- *                        sur les nœuds Besu pour l'ajouter au consensus IBFT 2.0
- *           rejeter    → rejectCandidate()   : bond rendu, status = Rejected
- *           retirer    → removeValidator()   : ex-validateur sortant
+ *         Lifecycle of a candidacy:
+ *           applyAsValidator()   -> Pending  (bond locked in this contract)
+ *           approveCandidate()   -> Approved (admin must also call
+ *                                  ibft_proposeValidatorVote(true, addr) on
+ *                                  existing nodes to add to consensus)
+ *           rejectCandidate()    -> Rejected (full bond refunded)
+ *           remove()             -> Removed  (clean exit, remaining bond refunded)
+ *           slash()              -> partial deduction, sent to treasury
  *
- *         L'ownership est destiné à être transféré à un `WINTGMultisig` /
- *         `Timelock` après le bootstrap pour décentraliser la gouvernance.
+ *         Bond mechanics:
+ *           - Bond is denominated in USD (8-decimal fixed point, Chainlink-style).
+ *           - At application time, the contract reads the price feed and requires
+ *             enough WTG to cover the USD bond.
+ *           - Admin / DAO can change `minBondUsd` at any time. Existing bonds
+ *             remain locked at the WTG value paid at application time, but the
+ *             new minimum applies to future applicants.
+ *           - On clean exit, the validator gets back whatever WTG remains in
+ *             their bond after any slashing.
+ *
+ *         Ownership is intended to be transferred to a multisig / timelock
+ *         after bootstrap so changes go through governance.
  */
 contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
     using Address for address payable;
@@ -36,53 +52,81 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
     enum Status { Unknown, Pending, Approved, Rejected, Removed }
 
     struct ValidatorInfo {
-        address validatorAddress;   // adresse IBFT (extraData)
+        address validatorAddress;
         string  name;
         string  organization;
         string  websiteUrl;
-        string  contactPgp;         // empreinte PGP pour comm sécurisée
-        string  geographicLocation; // ex: "Lomé, Togo"
-        string  enodeUrl;           // enode://<pubkey>@<ip>:30303
-        uint256 bondAmount;         // WTG bloqués pour la candidature
-        uint64  joinedAt;           // timestamp de rejoint (= approbation)
+        string  contactPgp;
+        string  geographicLocation;
+        string  enodeUrl;
+        uint256 bondAmount;     // remaining bond in WTG (wei)
+        uint256 bondPaidUsd;    // USD amount paid at application (8 decimals)
+        uint64  joinedAt;
         Status  status;
     }
 
-    /// @notice Bond minimum exigé pour postuler comme validateur.
-    /// Modifiable par l'admin/DAO via `setMinBond`.
-    uint256 public minBond;
+    /// @notice Minimum bond required to apply, expressed in USD with 8 decimals.
+    /// E.g. 10 USD => `minBondUsd = 10 * 1e8 = 1_000_000_000`.
+    /// Adjustable by the owner (intended to be a DAO/multisig post-bootstrap).
+    uint256 public minBondUsd;
+
+    /// @notice Address of the WTG/USD price feed (AggregatorV3-compatible).
+    IPriceFeed public priceFeed;
+
+    /// @notice Where slashed funds are sent. Typically the WINTG Treasury.
+    address payable public slashRecipient;
+
+    /// @notice Maximum acceptable age for the price feed reading.
+    uint64 public constant MAX_PRICE_AGE = 1 hours;
 
     mapping(address => ValidatorInfo) public validators;
     address[] public validatorList;
-    mapping(address => uint256) private _indexOf;  // 1-based
+    mapping(address => uint256) private _indexOf;          // 1-based
 
     address[] public candidateList;
-    mapping(address => uint256) private _candidateIndex;  // 1-based
+    mapping(address => uint256) private _candidateIndex;   // 1-based
 
-    event Applied(address indexed candidate, string name, uint256 bond);
+    event Applied(address indexed candidate, string name, uint256 bondWtg, uint256 bondUsd);
     event Approved(address indexed validator, string name);
     event Rejected(address indexed candidate, uint256 bondReturned);
+    event Slashed(address indexed validator, uint16 percentBps, uint256 amountToTreasury);
     event ValidatorAdded(address indexed validator, string name, string organization);
     event ValidatorUpdated(address indexed validator, string name);
-    event ValidatorRemoved(address indexed validator);
-    event MinBondChanged(uint256 oldBond, uint256 newBond);
+    event ValidatorRemoved(address indexed validator, uint256 bondReturned);
+    event MinBondUsdChanged(uint256 oldUsd, uint256 newUsd);
+    event PriceFeedChanged(address indexed oldFeed, address indexed newFeed);
+    event SlashRecipientChanged(address indexed oldRecipient, address indexed newRecipient);
 
     error AlreadyRegistered(address v);
     error NotRegistered(address v);
     error NotPending(address v);
+    error NotApproved(address v);
     error EmptyName();
     error InsufficientBond(uint256 sent, uint256 required);
-    error NothingToRefund();
+    error PriceFeedStale(uint256 updatedAt);
+    error InvalidPrice();
+    error InvalidPercent(uint16 bps);
+    error ZeroAddress();
 
-    constructor(address initialOwner_, uint256 minBond_) Ownable(initialOwner_) {
-        minBond = minBond_;
-        emit MinBondChanged(0, minBond_);
+    constructor(
+        address initialOwner_,
+        address priceFeed_,
+        address payable slashRecipient_,
+        uint256 minBondUsd_
+    ) Ownable(initialOwner_) {
+        if (priceFeed_ == address(0) || slashRecipient_ == address(0)) revert ZeroAddress();
+        priceFeed = IPriceFeed(priceFeed_);
+        slashRecipient = slashRecipient_;
+        minBondUsd = minBondUsd_;
+        emit PriceFeedChanged(address(0), priceFeed_);
+        emit SlashRecipientChanged(address(0), slashRecipient_);
+        emit MinBondUsdChanged(0, minBondUsd_);
     }
 
-    // ----- Candidacy flow ----------------------------------------------------
+    // ----- Public candidacy --------------------------------------------------
 
-    /// @notice Postuler comme validateur. Le bond doit être ≥ `minBond` en WTG natif.
-    /// L'adresse IBFT (validatorAddress) doit correspondre à la clé du nœud Besu.
+    /// @notice Apply to become a validator. Caller must send at least the WTG
+    /// equivalent of `minBondUsd` based on the current price feed reading.
     function applyAsValidator(
         address validatorAddress,
         string calldata name,
@@ -92,14 +136,14 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
         string calldata geographicLocation,
         string calldata enodeUrl
     ) external payable {
-        if (validators[validatorAddress].status == Status.Approved) {
+        Status current = validators[validatorAddress].status;
+        if (current == Status.Approved || current == Status.Pending) {
             revert AlreadyRegistered(validatorAddress);
         }
-        if (validators[validatorAddress].status == Status.Pending) {
-            revert AlreadyRegistered(validatorAddress);
-        }
-        if (msg.value < minBond) revert InsufficientBond(msg.value, minBond);
         if (bytes(name).length == 0) revert EmptyName();
+
+        uint256 requiredWei = bondInWtgWei();
+        if (msg.value < requiredWei) revert InsufficientBond(msg.value, requiredWei);
 
         validators[validatorAddress] = ValidatorInfo({
             validatorAddress:   validatorAddress,
@@ -110,18 +154,19 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
             geographicLocation: geographicLocation,
             enodeUrl:           enodeUrl,
             bondAmount:         msg.value,
+            bondPaidUsd:        minBondUsd,
             joinedAt:           0,
             status:             Status.Pending
         });
         candidateList.push(validatorAddress);
         _candidateIndex[validatorAddress] = candidateList.length;
 
-        emit Applied(validatorAddress, name, msg.value);
+        emit Applied(validatorAddress, name, msg.value, minBondUsd);
     }
 
-    /// @notice L'admin approuve une candidature et la fait passer en Approved.
-    /// Étape suivante hors-chaîne : `ibft_proposeValidatorVote(true, addr)` sur
-    /// chaque nœud existant pour l'ajouter au consensus.
+    /// @notice Approve a pending candidate. After this, the admin must also
+    /// call `ibft_proposeValidatorVote(true, addr)` on each existing Besu node
+    /// for the candidate to enter the consensus set.
     function approveCandidate(address candidate) external onlyOwner {
         ValidatorInfo storage v = validators[candidate];
         if (v.status != Status.Pending) revert NotPending(candidate);
@@ -130,7 +175,6 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
         v.joinedAt = uint64(block.timestamp);
 
         _removeFromCandidates(candidate);
-
         validatorList.push(candidate);
         _indexOf[candidate] = validatorList.length;
 
@@ -138,7 +182,7 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
         emit ValidatorAdded(candidate, v.name, v.organization);
     }
 
-    /// @notice Rejette une candidature et restitue le bond.
+    /// @notice Reject a pending candidate. Full bond is refunded.
     function rejectCandidate(address candidate) external onlyOwner nonReentrant {
         ValidatorInfo storage v = validators[candidate];
         if (v.status != Status.Pending) revert NotPending(candidate);
@@ -149,9 +193,7 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
 
         _removeFromCandidates(candidate);
 
-        if (bond > 0) {
-            payable(candidate).sendValue(bond);
-        }
+        if (bond > 0) payable(candidate).sendValue(bond);
         emit Rejected(candidate, bond);
     }
 
@@ -168,15 +210,72 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
         delete _candidateIndex[candidate];
     }
 
-    function setMinBond(uint256 newMinBond) external onlyOwner {
-        emit MinBondChanged(minBond, newMinBond);
-        minBond = newMinBond;
+    // ----- Slashing & exit ---------------------------------------------------
+
+    /// @notice Partially slash a validator's bond. `percentBps` is in basis
+    /// points (0–10000). Slashed funds go to `slashRecipient`.
+    /// Used for proven misbehavior; the validator stays on consensus until
+    /// `remove()` is called separately.
+    function slash(address validator_, uint16 percentBps) external onlyOwner nonReentrant {
+        if (percentBps == 0 || percentBps > 10_000) revert InvalidPercent(percentBps);
+        ValidatorInfo storage v = validators[validator_];
+        if (v.status != Status.Approved) revert NotApproved(validator_);
+
+        uint256 amount = (v.bondAmount * percentBps) / 10_000;
+        if (amount == 0) return;
+        v.bondAmount -= amount;
+        slashRecipient.sendValue(amount);
+        emit Slashed(validator_, percentBps, amount);
     }
 
-    // ----- Admin-only (bootstrap & corrections) ------------------------------
+    /// @notice Remove an approved validator. Refunds the remaining bond
+    /// (after any prior slashing). The admin must also remove the validator
+    /// from the consensus set via `ibft_proposeValidatorVote(false, addr)`.
+    function remove(address validatorAddress) external onlyOwner nonReentrant {
+        uint256 idx = _indexOf[validatorAddress];
+        if (idx == 0) revert NotRegistered(validatorAddress);
 
-    /// @notice Inscrit directement un validateur sans passer par la candidature.
-    /// Réservé au bootstrap (validateurs initiaux) et aux corrections de gouvernance.
+        ValidatorInfo storage v = validators[validatorAddress];
+        uint256 bond = v.bondAmount;
+
+        uint256 lastIdx = validatorList.length;
+        if (idx != lastIdx) {
+            address last = validatorList[lastIdx - 1];
+            validatorList[idx - 1] = last;
+            _indexOf[last] = idx;
+        }
+        validatorList.pop();
+        delete _indexOf[validatorAddress];
+
+        v.bondAmount = 0;
+        v.status = Status.Removed;
+
+        if (bond > 0) payable(validatorAddress).sendValue(bond);
+        emit ValidatorRemoved(validatorAddress, bond);
+    }
+
+    // ----- Admin / governance ------------------------------------------------
+
+    /// @notice Set the minimum bond in USD (8 decimals).
+    function setMinBondUsd(uint256 newMinBondUsd) external onlyOwner {
+        emit MinBondUsdChanged(minBondUsd, newMinBondUsd);
+        minBondUsd = newMinBondUsd;
+    }
+
+    function setPriceFeed(address newFeed) external onlyOwner {
+        if (newFeed == address(0)) revert ZeroAddress();
+        emit PriceFeedChanged(address(priceFeed), newFeed);
+        priceFeed = IPriceFeed(newFeed);
+    }
+
+    function setSlashRecipient(address payable newRecipient) external onlyOwner {
+        if (newRecipient == address(0)) revert ZeroAddress();
+        emit SlashRecipientChanged(slashRecipient, newRecipient);
+        slashRecipient = newRecipient;
+    }
+
+    /// @notice Insert a validator directly (bootstrap-only, no bond). Reserved
+    /// for the genesis validator set and for one-off corrections.
     function add(
         address validatorAddress,
         string calldata name,
@@ -186,10 +285,8 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
         string calldata geographicLocation,
         string calldata enodeUrl
     ) external onlyOwner {
-        if (validators[validatorAddress].status == Status.Approved) {
-            revert AlreadyRegistered(validatorAddress);
-        }
-        if (validators[validatorAddress].status == Status.Pending) {
+        Status current = validators[validatorAddress].status;
+        if (current == Status.Approved || current == Status.Pending) {
             revert AlreadyRegistered(validatorAddress);
         }
         if (bytes(name).length == 0) revert EmptyName();
@@ -203,6 +300,7 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
             geographicLocation: geographicLocation,
             enodeUrl:           enodeUrl,
             bondAmount:         0,
+            bondPaidUsd:        0,
             joinedAt:           uint64(block.timestamp),
             status:             Status.Approved
         });
@@ -232,35 +330,22 @@ contract ValidatorRegistry is Ownable2Step, ReentrancyGuard {
         emit ValidatorUpdated(validatorAddress, name);
     }
 
-    /// @notice Retire un validateur du registre. Restitue son bond s'il en a un.
-    /// L'admin doit aussi appeler `ibft_proposeValidatorVote(false, addr)` hors-chaîne.
-    function remove(address validatorAddress) external onlyOwner nonReentrant {
-        uint256 idx = _indexOf[validatorAddress];
-        if (idx == 0) revert NotRegistered(validatorAddress);
-
-        ValidatorInfo storage v = validators[validatorAddress];
-        uint256 bond = v.bondAmount;
-
-        // Swap-and-pop
-        uint256 lastIdx = validatorList.length;
-        if (idx != lastIdx) {
-            address last = validatorList[lastIdx - 1];
-            validatorList[idx - 1] = last;
-            _indexOf[last] = idx;
-        }
-        validatorList.pop();
-        delete _indexOf[validatorAddress];
-
-        v.bondAmount = 0;
-        v.status = Status.Removed;
-
-        if (bond > 0) {
-            payable(validatorAddress).sendValue(bond);
-        }
-        emit ValidatorRemoved(validatorAddress);
-    }
-
     // ----- Views -------------------------------------------------------------
+
+    /// @notice Return the WTG amount (in wei) currently required to apply.
+    /// Reverts if the price feed reading is stale or non-positive.
+    function bondInWtgWei() public view returns (uint256) {
+        (, int256 price, , uint256 updatedAt, ) = priceFeed.latestRoundData();
+        if (price <= 0) revert InvalidPrice();
+        if (block.timestamp - updatedAt > MAX_PRICE_AGE) revert PriceFeedStale(updatedAt);
+
+        // Both `minBondUsd` and `price` use the feed's decimals (8 by convention).
+        // requiredWei = (minBondUsd * 1e18) / price
+        // Both numerator and denominator share the price-feed decimals so they
+        // cancel out, leaving a value in wei.
+        uint256 priceU = uint256(price);
+        return (minBondUsd * 1e18) / priceU;
+    }
 
     function count() external view returns (uint256) {
         return validatorList.length;

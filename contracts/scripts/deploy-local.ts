@@ -52,7 +52,11 @@ async function main() {
 
   const Distrib = await ethers.getContractFactory("FeeDistributor");
   const distrib = await Distrib.deploy(
-    addresses.WINTGTreasury, addresses.WINTGTreasury, deployer.address, addresses.BurnContract,
+    addresses.WINTGTreasury,        // owner
+    addresses.WINTGTreasury,        // treasury (40 %)
+    deployer.address,               // validator pool (50 %)
+    addresses.BurnContract,         // burn (5 %)
+    addresses.WINTGTreasury,        // community pool (5 %) — default to Treasury locally
   );
   await distrib.waitForDeployment();
   addresses.FeeDistributor = await distrib.getAddress();
@@ -136,8 +140,16 @@ async function main() {
   addresses.Multicall3 = await multi.getAddress();
   console.log(`  ✓ Multicall3             ${addresses.Multicall3}`);
 
+  // ValidatorRegistry needs a price feed for USD-denominated bonds.
+  // For local dev we wire up the same OracleAggregator deployed above —
+  // operators can be set later. minBondUsd = 10 USD (8 decimals).
   const Reg = await ethers.getContractFactory("ValidatorRegistry");
-  const reg = await Reg.deploy(deployer.address, ethers.parseEther("100"));
+  const reg = await Reg.deploy(
+    deployer.address,
+    addresses.OracleAggregator,
+    addresses.WINTGTreasury,
+    10n * 10n ** 8n,
+  );
   await reg.waitForDeployment();
   addresses.ValidatorRegistry = await reg.getAddress();
   console.log(`  ✓ ValidatorRegistry      ${addresses.ValidatorRegistry}`);

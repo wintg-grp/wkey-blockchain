@@ -420,12 +420,12 @@ describe("Coverage3 — NFT supportsInterface false", () => {
 // =============================================================================
 describe("Coverage3 — FeeDistributor multiples distrib", () => {
   it("constructor avec zero recipients revert", async () => {
-    const [owner, t, v] = await ethers.getSigners();
+    const [owner, t, v, c] = await ethers.getSigners();
     const Burn = await ethers.getContractFactory("BurnContract");
     const burn = await Burn.deploy();
     const Distrib = await ethers.getContractFactory("FeeDistributor");
     await expect(
-      Distrib.deploy(owner.address, t.address, ethers.ZeroAddress, await burn.getAddress()),
+      Distrib.deploy(owner.address, t.address, ethers.ZeroAddress, await burn.getAddress(), c.address),
     ).to.be.revertedWithCustomError(Distrib, "ZeroAddress");
   });
 });

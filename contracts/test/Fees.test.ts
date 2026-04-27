@@ -34,8 +34,8 @@ describe("BurnContract", () => {
 });
 
 describe("FeeDistributor", () => {
-  it("répartit 70/20/10 et collecte les arrondis dans le burn", async () => {
-    const [owner, treasury, validators] = await ethers.getSigners();
+  it("splits 40/50/5/5 and routes rounding dust into the community pool", async () => {
+    const [owner, treasury, validators, community] = await ethers.getSigners();
 
     const Burn = await ethers.getContractFactory("BurnContract");
     const burn = await Burn.deploy();
@@ -47,62 +47,67 @@ describe("FeeDistributor", () => {
       treasury.address,
       validators.address,
       await burn.getAddress(),
+      community.address,
     );
     await d.waitForDeployment();
 
-    // Envoi de 100 WTG (montant rond pour vérifier l'exactitude)
+    // Send 100 WTG (round number to make the math obvious)
     await owner.sendTransaction({ to: await d.getAddress(), value: 100n * ONE_WTG });
 
     const tBefore = await ethers.provider.getBalance(treasury.address);
     const vBefore = await ethers.provider.getBalance(validators.address);
+    const cBefore = await ethers.provider.getBalance(community.address);
 
     await expect(d.distribute())
       .to.emit(d, "Distributed")
-      .withArgs(70n * ONE_WTG, 20n * ONE_WTG, 10n * ONE_WTG);
+      .withArgs(40n * ONE_WTG, 50n * ONE_WTG, 5n * ONE_WTG, 5n * ONE_WTG);
 
     const tAfter = await ethers.provider.getBalance(treasury.address);
     const vAfter = await ethers.provider.getBalance(validators.address);
+    const cAfter = await ethers.provider.getBalance(community.address);
 
-    expect(tAfter - tBefore).to.equal(70n * ONE_WTG);
-    expect(vAfter - vBefore).to.equal(20n * ONE_WTG);
-    expect(await burn.pendingBurn()).to.equal(10n * ONE_WTG);
+    expect(tAfter - tBefore).to.equal(40n * ONE_WTG);
+    expect(vAfter - vBefore).to.equal(50n * ONE_WTG);
+    expect(await burn.pendingBurn()).to.equal(5n * ONE_WTG);
+    expect(cAfter - cBefore).to.equal(5n * ONE_WTG);
     expect(await d.cumulativeDistributed()).to.equal(100n * ONE_WTG);
   });
 
-  it("revert si rien à distribuer", async () => {
-    const [owner, t, v] = await ethers.getSigners();
+  it("reverts when there's nothing to distribute", async () => {
+    const [owner, t, v, c] = await ethers.getSigners();
     const Burn = await ethers.getContractFactory("BurnContract");
     const burn = await Burn.deploy();
     const Distrib = await ethers.getContractFactory("FeeDistributor");
-    const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress());
+    const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress(), c.address);
     await expect(d.distribute()).to.be.revertedWithCustomError(d, "NothingToDistribute");
   });
 
-  it("setRecipients réservé à l'owner", async () => {
-    const [owner, t, v, stranger] = await ethers.getSigners();
+  it("setRecipients is owner-only and rejects zero addresses", async () => {
+    const [owner, t, v, c, stranger] = await ethers.getSigners();
     const Burn = await ethers.getContractFactory("BurnContract");
     const burn = await Burn.deploy();
     const Distrib = await ethers.getContractFactory("FeeDistributor");
-    const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress());
+    const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress(), c.address);
 
     await expect(
-      d.connect(stranger).setRecipients(stranger.address, stranger.address, stranger.address),
+      d.connect(stranger).setRecipients(stranger.address, stranger.address, stranger.address, stranger.address),
     ).to.be.revertedWithCustomError(d, "OwnableUnauthorizedAccount");
 
     await expect(
-      d.connect(owner).setRecipients(ethers.ZeroAddress, v.address, await burn.getAddress()),
+      d.connect(owner).setRecipients(ethers.ZeroAddress, v.address, await burn.getAddress(), c.address),
     ).to.be.revertedWithCustomError(d, "ZeroAddress");
   });
 
-  it("constants : sum(BPS) = 10000", async () => {
-    const [owner, t, v] = await ethers.getSigners();
+  it("constants: sum(BPS) = 10_000", async () => {
+    const [owner, t, v, c] = await ethers.getSigners();
     const Burn = await ethers.getContractFactory("BurnContract");
     const burn = await Burn.deploy();
     const Distrib = await ethers.getContractFactory("FeeDistributor");
-    const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress());
+    const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress(), c.address);
 
-    expect(await d.TREASURY_BPS()).to.equal(7000);
-    expect(await d.VALIDATOR_BPS()).to.equal(2000);
-    expect(await d.BURN_BPS()).to.equal(1000);
+    expect(await d.TREASURY_BPS()).to.equal(4000);
+    expect(await d.VALIDATOR_BPS()).to.equal(5000);
+    expect(await d.BURN_BPS()).to.equal(500);
+    expect(await d.COMMUNITY_BPS()).to.equal(500);
   });
 });

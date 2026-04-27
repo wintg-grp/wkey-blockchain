@@ -238,17 +238,29 @@ async function main() {
   await burn.waitForDeployment();
   record("BurnContract", await burn.getAddress(), [], startNonce + 10);
 
+  // FeeDistributor splits transaction fees 40/50/5/5
+  // (Treasury / Validator pool / Burn / Community pool).
+  // Community pool defaults to Treasury until a dedicated pool contract
+  // is deployed in a later step.
+  const communityPool = await treasuryMs.getAddress();
   const distrib = await F.FeeDistributor.deploy(
-    await treasuryMs.getAddress(),
-    await treasuryMs.getAddress(),
+    await treasuryMs.getAddress(),  // owner
+    await treasuryMs.getAddress(),  // treasury
     validatorPool,
     await burn.getAddress(),
+    communityPool,
   );
   await distrib.waitForDeployment();
   record(
     "FeeDistributor",
     await distrib.getAddress(),
-    [await treasuryMs.getAddress(), await treasuryMs.getAddress(), validatorPool, await burn.getAddress()],
+    [
+      await treasuryMs.getAddress(),
+      await treasuryMs.getAddress(),
+      validatorPool,
+      await burn.getAddress(),
+      communityPool,
+    ],
     startNonce + 11,
   );
 

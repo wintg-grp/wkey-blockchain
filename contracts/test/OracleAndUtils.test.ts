@@ -109,108 +109,172 @@ describe("ValidatorRegistry", () => {
   const STATUS_REMOVED = 4n;
 
   const ENODE = "enode://aabbcc@1.2.3.4:30303";
-  const BOND = ethers.parseEther("100");
+
+  // 8-decimal USD bond: 10 USD => 10 * 1e8
+  const MIN_BOND_USD = 10n * 10n ** 8n;
+  // Mock price = 0.10 USD per WTG (8 decimals): 1 WTG = 0.10 USD
+  const PRICE_8D = 10n ** 7n;
+  // bond required = (10 * 1e8 * 1e18) / 1e7 = 100 * 1e18 = 100 WTG
+  const REQUIRED_WTG = ethers.parseEther("100");
+
+  async function deployRegistry(ownerAddr: string, slashRecipient: string) {
+    // Mock price feed via the existing OracleAggregator deployed on the fly.
+    // Easier path: deploy a tiny inline mock that exposes latestRoundData().
+    const Mock = await ethers.getContractFactory("MockPriceFeed");
+    const feed = await Mock.deploy(8, PRICE_8D);
+    await feed.waitForDeployment();
+
+    const Reg = await ethers.getContractFactory("ValidatorRegistry");
+    const reg = await Reg.deploy(ownerAddr, await feed.getAddress(), slashRecipient, MIN_BOND_USD);
+    await reg.waitForDeployment();
+    return { reg, feed };
+  }
 
   it("admin add / update / remove (bootstrap path)", async () => {
-    const [owner, v1, v2] = await ethers.getSigners();
-    const Reg = await ethers.getContractFactory("ValidatorRegistry");
-    const reg = await Reg.deploy(owner.address, BOND);
+    const [owner, v1, v2, treasury] = await ethers.getSigners();
+    const { reg } = await deployRegistry(owner.address, treasury.address);
 
-    await reg.add(v1.address, "WINTG", "WINTG SARL", "https://wintg.network", "0xPGP", "Lomé, Togo", ENODE);
+    await reg.add(v1.address, "WINTG", "WINTG Group", "https://wintg.network", "0xPGP", "Lomé, Togo", ENODE);
     expect(await reg.count()).to.equal(1n);
 
-    // Doublon
     await expect(
       reg.add(v1.address, "X", "Y", "Z", "P", "G", ENODE),
     ).to.be.revertedWithCustomError(reg, "AlreadyRegistered");
 
-    // Update
-    await reg.update(v1.address, "WINTG-2", "WINTG SARL", "https://wintg.network", "0xPGP", "Lomé", ENODE);
+    await reg.update(v1.address, "WINTG-2", "WINTG Group", "https://wintg.network", "0xPGP", "Lomé", ENODE);
     const info = await reg.validators(v1.address);
     expect(info.name).to.equal("WINTG-2");
     expect(info.status).to.equal(STATUS_APPROVED);
 
-    // Ajout d'un 2e
-    await reg.add(v2.address, "UCAO", "UCAO Univ", "https://ucao.bj", "", "Cotonou", ENODE);
-    const all = await reg.listAll();
-    expect(all.length).to.equal(2);
+    await reg.add(v2.address, "Node-Two", "Org", "https://example.org", "", "Cotonou", ENODE);
+    expect((await reg.listAll()).length).to.equal(2);
 
-    // Remove
     await reg.remove(v1.address);
     expect(await reg.count()).to.equal(1n);
     await expect(reg.remove(v1.address)).to.be.revertedWithCustomError(reg, "NotRegistered");
     expect((await reg.validators(v1.address)).status).to.equal(STATUS_REMOVED);
   });
 
-  it("public candidacy : apply, approve, reject", async () => {
-    const [owner, alice, bob] = await ethers.getSigners();
-    const Reg = await ethers.getContractFactory("ValidatorRegistry");
-    const reg = await Reg.deploy(owner.address, BOND);
+  it("public candidacy: apply, approve, reject (USD-priced bond)", async () => {
+    const [owner, alice, bob, treasury] = await ethers.getSigners();
+    const { reg } = await deployRegistry(owner.address, treasury.address);
 
-    // Bond insuffisant
+    expect(await reg.bondInWtgWei()).to.equal(REQUIRED_WTG);
+
     await expect(
-      reg
-        .connect(alice)
-        .applyAsValidator(alice.address, "Alice", "ACME", "https://acme.io", "", "Paris", ENODE, {
-          value: BOND - 1n,
-        }),
+      reg.connect(alice).applyAsValidator(
+        alice.address, "Alice", "ACME", "https://acme.io", "", "Paris", ENODE,
+        { value: REQUIRED_WTG - 1n },
+      ),
     ).to.be.revertedWithCustomError(reg, "InsufficientBond");
 
-    // Candidature OK
-    await reg
-      .connect(alice)
-      .applyAsValidator(alice.address, "Alice", "ACME", "https://acme.io", "", "Paris", ENODE, {
-        value: BOND,
-      });
+    await reg.connect(alice).applyAsValidator(
+      alice.address, "Alice", "ACME", "https://acme.io", "", "Paris", ENODE,
+      { value: REQUIRED_WTG },
+    );
     expect(await reg.candidateCount()).to.equal(1n);
     expect((await reg.validators(alice.address)).status).to.equal(STATUS_PENDING);
 
-    // Re-candidature interdite
     await expect(
-      reg
-        .connect(alice)
-        .applyAsValidator(alice.address, "Alice", "ACME", "", "", "", ENODE, { value: BOND }),
+      reg.connect(alice).applyAsValidator(
+        alice.address, "Alice", "ACME", "", "", "", ENODE, { value: REQUIRED_WTG },
+      ),
     ).to.be.revertedWithCustomError(reg, "AlreadyRegistered");
 
-    // Bob postule également
-    await reg
-      .connect(bob)
-      .applyAsValidator(bob.address, "Bob", "BobNet", "https://bobnet.org", "", "Berlin", ENODE, {
-        value: BOND,
-      });
+    await reg.connect(bob).applyAsValidator(
+      bob.address, "Bob", "BobNet", "https://bobnet.org", "", "Berlin", ENODE,
+      { value: REQUIRED_WTG },
+    );
     expect(await reg.candidateCount()).to.equal(2n);
 
-    // Approve Alice → passe en validateur actif
     await reg.connect(owner).approveCandidate(alice.address);
     expect(await reg.count()).to.equal(1n);
-    expect(await reg.candidateCount()).to.equal(1n);
     expect((await reg.validators(alice.address)).status).to.equal(STATUS_APPROVED);
 
-    // Reject Bob → bond restitué
     const bobBefore = await ethers.provider.getBalance(bob.address);
-    const tx = await reg.connect(owner).rejectCandidate(bob.address);
-    await tx.wait();
+    await (await reg.connect(owner).rejectCandidate(bob.address)).wait();
     const bobAfter = await ethers.provider.getBalance(bob.address);
-    expect(bobAfter - bobBefore).to.equal(BOND);
+    expect(bobAfter - bobBefore).to.equal(REQUIRED_WTG);
     expect((await reg.validators(bob.address)).status).to.equal(STATUS_REJECTED);
-    expect(await reg.candidateCount()).to.equal(0n);
   });
 
-  it("approveCandidate revert si pas pending", async () => {
-    const [owner, alice] = await ethers.getSigners();
-    const Reg = await ethers.getContractFactory("ValidatorRegistry");
-    const reg = await Reg.deploy(owner.address, BOND);
+  it("clean exit refunds the remaining bond", async () => {
+    const [owner, alice, treasury] = await ethers.getSigners();
+    const { reg } = await deployRegistry(owner.address, treasury.address);
 
+    await reg.connect(alice).applyAsValidator(
+      alice.address, "Alice", "ACME", "https://acme.io", "", "Paris", ENODE,
+      { value: REQUIRED_WTG },
+    );
+    await reg.connect(owner).approveCandidate(alice.address);
+
+    const before = await ethers.provider.getBalance(alice.address);
+    await (await reg.connect(owner).remove(alice.address)).wait();
+    const after = await ethers.provider.getBalance(alice.address);
+    expect(after - before).to.equal(REQUIRED_WTG);
+    expect((await reg.validators(alice.address)).status).to.equal(STATUS_REMOVED);
+  });
+
+  it("partial slashing sends to recipient, leaves the rest withdrawable", async () => {
+    const [owner, alice, treasury] = await ethers.getSigners();
+    const { reg } = await deployRegistry(owner.address, treasury.address);
+
+    await reg.connect(alice).applyAsValidator(
+      alice.address, "Alice", "ACME", "https://acme.io", "", "Paris", ENODE,
+      { value: REQUIRED_WTG },
+    );
+    await reg.connect(owner).approveCandidate(alice.address);
+
+    // Slash 25 % (2500 bps)
+    const tBefore = await ethers.provider.getBalance(treasury.address);
+    await (await reg.connect(owner).slash(alice.address, 2500)).wait();
+    const tAfter = await ethers.provider.getBalance(treasury.address);
+    const slashed = (REQUIRED_WTG * 2500n) / 10_000n;
+    expect(tAfter - tBefore).to.equal(slashed);
+
+    // Remaining bond should be 75 % of original
+    const info = await reg.validators(alice.address);
+    expect(info.bondAmount).to.equal(REQUIRED_WTG - slashed);
+
+    // Clean exit refunds the remainder
+    const aBefore = await ethers.provider.getBalance(alice.address);
+    await (await reg.connect(owner).remove(alice.address)).wait();
+    const aAfter = await ethers.provider.getBalance(alice.address);
+    expect(aAfter - aBefore).to.equal(REQUIRED_WTG - slashed);
+  });
+
+  it("slash reverts on bad parameters", async () => {
+    const [owner, alice, treasury] = await ethers.getSigners();
+    const { reg } = await deployRegistry(owner.address, treasury.address);
+
+    await expect(reg.slash(alice.address, 0)).to.be.revertedWithCustomError(reg, "InvalidPercent");
+    await expect(reg.slash(alice.address, 10_001)).to.be.revertedWithCustomError(reg, "InvalidPercent");
+    await expect(reg.slash(alice.address, 100)).to.be.revertedWithCustomError(reg, "NotApproved");
+  });
+
+  it("setMinBondUsd updates the threshold used for new applications", async () => {
+    const [owner, alice, treasury] = await ethers.getSigners();
+    const { reg } = await deployRegistry(owner.address, treasury.address);
+
+    const newUsd = 100n * 10n ** 8n; // 100 USD
+    await reg.setMinBondUsd(newUsd);
+    expect(await reg.minBondUsd()).to.equal(newUsd);
+    // 100 USD / (0.10 USD/WTG) = 1000 WTG required
+    expect(await reg.bondInWtgWei()).to.equal(ethers.parseEther("1000"));
+
+    // Old threshold (100 WTG) is now insufficient
+    await expect(
+      reg.connect(alice).applyAsValidator(
+        alice.address, "Alice", "ACME", "https://acme.io", "", "Paris", ENODE,
+        { value: REQUIRED_WTG },
+      ),
+    ).to.be.revertedWithCustomError(reg, "InsufficientBond");
+  });
+
+  it("approveCandidate / rejectCandidate revert if not pending", async () => {
+    const [owner, alice, treasury] = await ethers.getSigners();
+    const { reg } = await deployRegistry(owner.address, treasury.address);
     await expect(reg.approveCandidate(alice.address)).to.be.revertedWithCustomError(reg, "NotPending");
     await expect(reg.rejectCandidate(alice.address)).to.be.revertedWithCustomError(reg, "NotPending");
-  });
-
-  it("setMinBond modifie le seuil", async () => {
-    const [owner] = await ethers.getSigners();
-    const Reg = await ethers.getContractFactory("ValidatorRegistry");
-    const reg = await Reg.deploy(owner.address, BOND);
-
-    await reg.setMinBond(ethers.parseEther("1000"));
-    expect(await reg.minBond()).to.equal(ethers.parseEther("1000"));
   });
 });

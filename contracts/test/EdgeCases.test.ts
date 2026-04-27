@@ -192,12 +192,12 @@ describe("Edge cases — couverture additionnelle", () => {
   });
 
   describe("FeeDistributor.cumulativeDistributed", () => {
-    it("retourne la somme des trois flux", async () => {
-      const [owner, t, v] = await ethers.getSigners();
+    it("retourne la somme des quatre flux", async () => {
+      const [owner, t, v, c] = await ethers.getSigners();
       const Burn = await ethers.getContractFactory("BurnContract");
       const burn = await Burn.deploy();
       const Distrib = await ethers.getContractFactory("FeeDistributor");
-      const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress());
+      const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress(), c.address);
 
       await owner.sendTransaction({ to: await d.getAddress(), value: 1000n * ONE_WTG });
       await d.distribute();
@@ -206,16 +206,17 @@ describe("Edge cases — couverture additionnelle", () => {
     });
 
     it("setRecipients met à jour et émet RecipientsUpdated", async () => {
-      const [owner, t, v, t2, v2] = await ethers.getSigners();
+      const [owner, t, v, c, t2, v2, c2] = await ethers.getSigners();
       const Burn = await ethers.getContractFactory("BurnContract");
       const burn = await Burn.deploy();
       const Distrib = await ethers.getContractFactory("FeeDistributor");
-      const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress());
+      const d = await Distrib.deploy(owner.address, t.address, v.address, await burn.getAddress(), c.address);
 
-      await expect(d.connect(owner).setRecipients(t2.address, v2.address, await burn.getAddress()))
+      await expect(d.connect(owner).setRecipients(t2.address, v2.address, await burn.getAddress(), c2.address))
         .to.emit(d, "RecipientsUpdated")
-        .withArgs(t2.address, v2.address, await burn.getAddress());
+        .withArgs(t2.address, v2.address, await burn.getAddress(), c2.address);
       expect(await d.treasury()).to.equal(t2.address);
+      expect(await d.communityPool()).to.equal(c2.address);
     });
   });
 });

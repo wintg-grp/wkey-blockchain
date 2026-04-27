@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.24;
 
 import "forge-std/Test.sol";
@@ -6,21 +6,22 @@ import {FeeDistributor} from "../../src/fees/FeeDistributor.sol";
 import {BurnContract} from "../../src/fees/BurnContract.sol";
 
 /**
- * @notice Invariants du FeeDistributor sous fuzzing.
- *   I1 — somme distribuée == solde initial (à 1 wei près d'arrondi vers burn)
- *   I2 — treasury reçoit exactement 70 %, validators 20 %, burn ≥ 10 %
- *   I3 — cumul des cumulatives = total distribué
+ * @notice Fuzz invariants for FeeDistributor under the 40/50/5/5 split.
+ *   I1 — sum of distributed deltas == initial balance
+ *   I2 — treasury 40 %, validators 50 %, burn 5 %, community ≥ 5 %
+ *   I3 — cumulative counters track the deltas
  */
 contract FeeDistributorFuzz is Test {
     FeeDistributor internal d;
     BurnContract internal burn;
-    address payable internal treasury = payable(address(0xCAFE));
+    address payable internal treasury  = payable(address(0xCAFE));
     address payable internal validators = payable(address(0xBEEF));
+    address payable internal community = payable(address(0xDEAD));
     address internal owner = address(0xA);
 
     function setUp() public {
         burn = new BurnContract();
-        d = new FeeDistributor(owner, treasury, validators, payable(address(burn)));
+        d = new FeeDistributor(owner, treasury, validators, payable(address(burn)), community);
     }
 
     function testFuzz_Distribution(uint256 amount) public {
@@ -30,24 +31,28 @@ contract FeeDistributorFuzz is Test {
         uint256 tBefore = treasury.balance;
         uint256 vBefore = validators.balance;
         uint256 bBefore = address(burn).balance;
+        uint256 cBefore = community.balance;
 
         d.distribute();
 
         uint256 tDelta = treasury.balance - tBefore;
         uint256 vDelta = validators.balance - vBefore;
         uint256 bDelta = address(burn).balance - bBefore;
+        uint256 cDelta = community.balance - cBefore;
 
-        // I2 — proportions exactes (les arrondis vont au burn)
-        assertEq(tDelta, (amount * 7000) / 10_000, "treasury share");
-        assertEq(vDelta, (amount * 2000) / 10_000, "validators share");
-        assertGe(bDelta, (amount * 1000) / 10_000, "burn share min");
+        // I2 — exact proportions (rounding goes into community)
+        assertEq(tDelta, (amount * 4000) / 10_000, "treasury share");
+        assertEq(vDelta, (amount * 5000) / 10_000, "validators share");
+        assertEq(bDelta, (amount * 500)  / 10_000, "burn share");
+        assertGe(cDelta, (amount * 500)  / 10_000, "community share min");
 
-        // I1 — somme = total
-        assertEq(tDelta + vDelta + bDelta, amount, "sum = total");
+        // I1 — sum equals total input
+        assertEq(tDelta + vDelta + bDelta + cDelta, amount, "sum = total");
 
-        // I3 — cumulatives consistantes
-        assertEq(d.cumulativeToTreasury(), tDelta);
+        // I3 — cumulative counters
+        assertEq(d.cumulativeToTreasury(),  tDelta);
         assertEq(d.cumulativeToValidators(), vDelta);
-        assertEq(d.cumulativeToBurn(), bDelta);
+        assertEq(d.cumulativeToBurn(),       bDelta);
+        assertEq(d.cumulativeToCommunity(),  cDelta);
     }
 }
