@@ -1,0 +1,143 @@
+
+# =============================================================================
+# WINTG reverse-proxy entries
+# Append into the DirectAdmin custom openlitespeed_vhost.conf template.
+# Each block is gated by SDOMAIN so it only renders on the matching vhost.
+# =============================================================================
+
+# --- Mainnet RPC --------------------------------------------------------------
+|*if SDOMAIN="rpc.wintg.network"|
+extProcessor BesuRpcMainnet {
+  type                    proxy
+  address                 127.0.0.1:8545
+  maxConns                100
+  pcKeepAliveTimeout      60
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+context / {
+  type                    proxy
+  handler                 BesuRpcMainnet
+  addDefaultCharset       off
+}
+|*endif|
+
+# --- Mainnet WebSocket --------------------------------------------------------
+|*if SDOMAIN="ws.wintg.network"|
+extProcessor BesuWsMainnet {
+  type                    proxy
+  address                 127.0.0.1:8546
+  maxConns                100
+  pcKeepAliveTimeout      60
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+context / {
+  type                    proxy
+  handler                 BesuWsMainnet
+  addDefaultCharset       off
+}
+|*endif|
+
+# --- Testnet RPC --------------------------------------------------------------
+|*if SDOMAIN="testnet-rpc.wintg.network"|
+extProcessor BesuRpcTestnet {
+  type                    proxy
+  address                 127.0.0.1:8547
+  maxConns                100
+  pcKeepAliveTimeout      60
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+context / {
+  type                    proxy
+  handler                 BesuRpcTestnet
+  addDefaultCharset       off
+}
+|*endif|
+
+# --- Testnet WebSocket --------------------------------------------------------
+|*if SDOMAIN="testnet-ws.wintg.network"|
+extProcessor BesuWsTestnet {
+  type                    proxy
+  address                 127.0.0.1:8548
+  maxConns                100
+  pcKeepAliveTimeout      60
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+context / {
+  type                    proxy
+  handler                 BesuWsTestnet
+  addDefaultCharset       off
+}
+|*endif|
+
+# --- Explorer (Blockscout: frontend on 3000 + /api on 4000) -------------------
+|*if SDOMAIN="scan.wintg.network"|
+extProcessor BlockscoutFrontend {
+  type                    proxy
+  address                 127.0.0.1:3000
+  maxConns                100
+  pcKeepAliveTimeout      60
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+extProcessor BlockscoutApi {
+  type                    proxy
+  address                 127.0.0.1:4000
+  maxConns                100
+  pcKeepAliveTimeout      60
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+context /api/ {
+  type                    proxy
+  handler                 BlockscoutApi
+  addDefaultCharset       off
+}
+context /socket/ {
+  type                    proxy
+  handler                 BlockscoutApi
+  addDefaultCharset       off
+}
+context /graphiql {
+  type                    proxy
+  handler                 BlockscoutApi
+  addDefaultCharset       off
+}
+context /metrics {
+  type                    proxy
+  handler                 BlockscoutApi
+  addDefaultCharset       off
+}
+context / {
+  type                    proxy
+  handler                 BlockscoutFrontend
+  addDefaultCharset       off
+}
+|*endif|
+
+# --- Faucet (testnet) ---------------------------------------------------------
+|*if SDOMAIN="faucet.wintg.network"|
+extProcessor WintgFaucet {
+  type                    proxy
+  address                 127.0.0.1:4001
+  maxConns                50
+  pcKeepAliveTimeout      30
+  initTimeout             30
+  retryTimeout            0
+  respBuffer              0
+}
+context / {
+  type                    proxy
+  handler                 WintgFaucet
+  addDefaultCharset       off
+}
+|*endif|
