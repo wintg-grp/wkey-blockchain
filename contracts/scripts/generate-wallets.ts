@@ -42,6 +42,8 @@ const ROLES = [
   "treasury-signer-1",
   "treasury-signer-2",
   "treasury-signer-3",
+  "treasury-signer-4",
+  "treasury-signer-5",
   "team-beneficiary",
   "advisors-beneficiary",
   "ecosystem-beneficiary",
