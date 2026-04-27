@@ -77,13 +77,13 @@ WINTG est une blockchain Layer 1 EVM-compatible (Hyperledger Besu, IBFT 2.0) con
    a. Inclut la tx dans son bloc proposé
    b. Diffuse la proposition aux autres validateurs IBFT
    c. (Phase bootstrap : 1 seul validateur, donc auto-acceptation)
-5. Bloc finalisé en 1 round IBFT (~3 s)
+5. Bloc finalisé en 1 round IBFT (~1 s)
 6. Hot standby reçoit le bloc via P2P et l'applique à son state
 7. Blockscout indexe le bloc (RPC eth_getBlockByNumber)
 8. Frais de la tx :
    a. Coinbase = adresse EOA du validateur
    b. Keeper externe transfère périodiquement → FeeDistributor
-   c. FeeDistributor split 70 % Treasury / 20 % ValidatorPool / 10 % Burn
+   c. FeeDistributor split 40 % Treasury / 50 % Validateurs / 5 % Burn / 5 % CommunityPool
 ```
 
 ## 5. Stack logicielle

@@ -33,26 +33,31 @@
 ```
             100 % des fees collectés (gas × prix)
                           │
-            ┌─────────────┼─────────────┐
-           70 %          20 %          10 %
-            │             │             │
-            ▼             ▼             ▼
-       WINTGTreasury   ValidatorPool    BurnContract
-       (multisig)      (pro-rata)     (→ 0x...dEaD)
+            ┌─────────────┼─────────────┬──────────────┐
+           40 %          50 %          5 %            5 %
+            │             │            │              │
+            ▼             ▼            ▼              ▼
+       WINTGTreasury  ValidatorPool  BurnContract  CommunityPool
+       (multisig)     (pro-rata)     (→ 0x...dEaD) (campagnes,
+                                                    airdrops)
 ```
 
 Implémenté par `FeeDistributor.sol`. La répartition est **immutable** à la
-construction (anti-rugpull économique). Seuls les destinataires (adresses
-des trois cibles) sont modifiables par l'owner.
+construction (anti-rugpull économique). Seules les adresses destinataires
+peuvent être tournées via la gouvernance — pratique quand un contrat aval
+est mis à jour.
 
 ### Pourquoi ce ratio ?
 
-- **70 % Treasury** : finance le développement, les grants, le marketing,
-  les buybacks éventuels en phase 2.
-- **20 % Validateurs** : récompense la production de blocs (revenus
-  validateurs = fees uniquement, pas d'inflation pré-staking).
-- **10 % Burn** : pression déflationniste pour aligner les intérêts long-terme
-  des holders.
+- **40 % Treasury** : finance le développement, les grants, le marketing,
+  l'opération courante.
+- **50 % Validateurs** : récompense la production de blocs (revenus
+  validateurs = fees uniquement, pas d'inflation pré-staking). C'est la
+  part la plus importante : sans validateurs il n'y a pas de chaîne.
+- **5 % Burn** : pression déflationniste pour aligner les intérêts
+  long-terme des holders.
+- **5 % Community Pool** : campagnes ponctuelles, airdrops, récompenses
+  écosystème, sponsoring d'événements. Géré par la DAO.
 
 ## Schedule récapitulatif (TGE = T0)
 

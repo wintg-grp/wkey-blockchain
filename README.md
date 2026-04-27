@@ -6,17 +6,27 @@
 [![CI](https://github.com/wintg-grp/wkey-blockchain/actions/workflows/ci.yml/badge.svg)](https://github.com/wintg-grp/wkey-blockchain/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/badge/coverage-≥95%25-brightgreen)](#tests--coverage)
 
-WINTG is an EVM-compatible Layer 1 designed for builders in Africa and the
-broader UEMOA region — fast, cheap, with a permissionless smart contract
-surface and a focus on dApps, gaming, and consumer payments.
+Welcome to WINTG. We're building an EVM Layer 1 for Africa and the
+broader UEMOA region — a chain that's fast enough for games, cheap
+enough for everyday payments, and open enough that anyone can deploy
+a contract or run a validator.
 
-- **Native token**: `WTG` — fixed 1 000 000 000 supply, deflationary fee burn, capped staking inflation
-- **Consensus**: Hyperledger Besu / IBFT 2.0 — instant finality, no orphan blocks
-- **Block time**: 1 second
-- **Gas limit**: 100 000 000 per block
-- **Min gas price**: 3 gwei (aligned with BNB Chain)
-- **Mainnet chain ID**: `2280` · **Testnet chain ID**: `22800`
-- **Permissionless**: anyone can deploy a contract, anyone can apply to run a validator
+This repository contains everything we ship: the chain configuration,
+the smart contracts, the SDK, the testnet faucet, and the operational
+scripts behind our nodes.
+
+## At a glance
+
+- **Native token**: `WTG`. 1 000 000 000 fixed supply, deflationary fee
+  burn, capped staking inflation.
+- **Consensus**: Hyperledger Besu / IBFT 2.0 — instant finality, no
+  orphan blocks.
+- **Block time**: 1 second.
+- **Block gas limit**: 100 000 000.
+- **Minimum gas price**: 3 gwei.
+- **Mainnet chain ID**: `2280` · **Testnet chain ID**: `22800`.
+- **Open by default**: anyone deploys, anyone transacts, anyone applies
+  to validate.
 
 ## Network endpoints
 
@@ -24,27 +34,30 @@ surface and a focus on dApps, gaming, and consumer payments.
 |---|---|---|
 | RPC | `https://rpc.wintg.network` | `https://testnet-rpc.wintg.network` |
 | WebSocket | `wss://ws.wintg.network` | `wss://testnet-ws.wintg.network` |
-| Explorer | `https://scan.wintg.network` | `https://testnet-scan.wintg.network` |
+| Explorer | `https://scan.wintg.network` | `https://scan.wintg.network` |
 | Faucet | n/a | `https://faucet.wintg.network` |
 | Documentation | `https://doc.wintg.network` | — |
 
-To add WINTG to MetaMask manually, use the values above with chain ID
-`2280` (mainnet) or `22800` (testnet) and currency symbol `WTG`. Or use
-the one-click flow on Chainlist once we land there.
+The explorer at `scan.wintg.network` displays both networks; switch
+between them from the network selector inside the app.
 
-## What's in this repository
+To add WINTG to your wallet manually, use the values above with chain
+ID `2280` (mainnet) or `22800` (testnet) and currency symbol `WTG`.
+A one-click flow on the chain registries will follow shortly.
+
+## Repository layout
 
 ```
 .
-├── besu/              Besu genesis + config files (mainnet & testnet)
-├── chainlist/         Chain registry submission package (logos, JSON)
+├── besu/              Besu genesis + config (mainnet & testnet)
+├── chainlist/         Chain registry submission package
 ├── contracts/         Solidity sources, Hardhat tests, deployment scripts
 │   └── src/           Token, vesting, treasury, governance, factories,
 │                      validators, NFT, DEX, lending, oracle, staking,
 │                      bridge, stablecoin
-├── docs/              Tokenomics, validator guide, architecture,
-│                      deployment runbook, gaming guide
-├── explorer/          Block explorer assembly (Blockscout-based + custom UI)
+├── docs/              Architecture, tokenomics, validator guide,
+│                      gaming guide, deployment runbook
+├── explorer/          Block explorer assembly
 ├── faucet/            Testnet faucet (Express + hCaptcha)
 ├── monitoring/        Prometheus + Grafana stack
 ├── scripts/           Server-side bootstrap (Ubuntu / AlmaLinux)
@@ -55,26 +68,20 @@ the one-click flow on Chainlist once we land there.
 
 ### Use WINTG as a developer
 
-Install any standard EVM tooling and point it at the RPC:
-
-```bash
-npm install ethers
-```
+Install standard EVM tooling and point it at our RPC:
 
 ```ts
 import { JsonRpcProvider } from "ethers";
 
 const provider = new JsonRpcProvider("https://rpc.wintg.network");
 const block = await provider.getBlockNumber();
-console.log("WINTG mainnet block:", block);
+console.log("WINTG block:", block);
 ```
 
-For the testnet, switch the URL to `https://testnet-rpc.wintg.network`,
-get a few WTG from the faucet, and you're ready to deploy.
+For the testnet, switch to `https://testnet-rpc.wintg.network`, get
+a few WTG from the faucet, and you're ready to deploy.
 
 ### Deploy a contract
-
-Deployments work like on any EVM network. With Hardhat:
 
 ```bash
 cd contracts
@@ -83,13 +90,13 @@ npm run build
 DEPLOYER_PRIVATE_KEY=0x... npm run deploy:testnet
 ```
 
-Verify the contract on the explorer through the Etherscan-compatible
-endpoint already wired into `hardhat.config.ts`.
+Verification on the explorer is wired through an Etherscan-compatible
+endpoint already configured in `hardhat.config.ts`.
 
 ### Run a node
 
-The full bootstrap script for Ubuntu 22.04 LTS or AlmaLinux 9 lives in
-`scripts/`. The short version, on a fresh Ubuntu VPS:
+The bootstrap scripts for Ubuntu 22.04 LTS or AlmaLinux 9 live in
+`scripts/`. The short version, on a fresh VPS:
 
 ```bash
 git clone https://github.com/wintg-grp/wkey-blockchain.git
@@ -98,36 +105,41 @@ sudo ./scripts/setup-validator.sh testnet
 ```
 
 The script handles user creation, dependency installation, key
-generation, systemd unit, firewall rules, and brings the node online.
-For AlmaLinux/RHEL hosts (notably with DirectAdmin) use
+generation, the systemd unit, firewall rules, and brings the node
+online. For AlmaLinux/RHEL hosts (notably with DirectAdmin) use
 `scripts/install-besu-almalinux.sh`.
 
 ## Become a validator
 
-WINTG is permissionless on the application layer: anyone can deploy
-contracts and submit transactions. Validator membership uses an open
-candidacy model on top of IBFT 2.0:
+WINTG is permissionless on the application layer: anyone deploys
+contracts, anyone transacts. Validator membership uses an open
+candidacy flow on top of IBFT 2.0:
 
-1. Run a syncing node and capture its enode + validator address
+1. Run a fully synced node and capture its enode + validator address.
 2. Call `applyAsValidator(...)` on the `ValidatorRegistry` contract
-   with the required bond (currently 100 WTG)
-3. Existing validators review the candidacy and, if approved, vote the
-   new node in via `ibft_proposeValidatorVote`
-4. The new node starts producing blocks at the next epoch
+   and post the bond. The bond is set in USD by governance — at
+   launch, **10 USD** worth of WTG, computed live by an on-chain
+   price feed. The DAO can change this amount at any time.
+3. Existing validators review your candidacy. If approved, they vote
+   you into the consensus set via `ibft_proposeValidatorVote`.
+4. Your node starts producing blocks at the next epoch.
 
-The full procedure, hardware requirements, and exit rules live in
-[`docs/VALIDATOR_GUIDE.md`](docs/VALIDATOR_GUIDE.md).
+The bond stays locked in the contract while you operate. On a clean
+exit it is refunded in full. In case of provable misbehavior, the
+contract supports partial slashing — the slashed amount is sent to
+the Treasury and the rest remains withdrawable on exit.
 
-We expect the validator set to grow to 6 nodes within the first 6
-months and to 24 nodes within 24 months. The roadmap and acceptance
-criteria are public.
+The full procedure (hardware, network, communication channels,
+exit rules) is in [`docs/VALIDATOR_GUIDE.md`](docs/VALIDATOR_GUIDE.md).
+We plan to expand the validator set as adoption grows.
 
 ## Tokenomics
 
-WTG is the native gas and value asset of WINTG. Total supply is fixed
-at one billion. Genesis allocations are pre-committed to vesting
+WTG is the native gas and value asset of WINTG. Total supply is
+fixed at one billion. Genesis allocations are pre-committed to vesting
 contracts whose addresses are deterministic (CREATE-derived from the
-deployer's nonce sequence) and verifiable from the genesis file.
+deployer's nonce sequence) and verifiable directly from the genesis
+file.
 
 | Bucket | Share | Vesting |
 |---|---:|---|
@@ -142,13 +154,15 @@ deployer's nonce sequence) and verifiable from the genesis file.
 | Treasury | 10 % | 4 y linear |
 | Partners | 2 % | 1 y cliff, 2 y linear |
 
-Fee distribution per block: **70 % Treasury / 20 % validator pool / 10 % burn.**
-Full numbers, contract addresses, and emission curves in
+**Per-block fee distribution** — 40 % Treasury · 50 % validator pool ·
+5 % burn · 5 % community pool (campaigns, airdrops, ecosystem rewards).
+
+Numbers, contract addresses, and emission curves are in
 [`docs/TOKENOMICS.md`](docs/TOKENOMICS.md).
 
 ## Build the chain locally
 
-You can spin up a single-validator dev chain in under a minute:
+A single-validator dev chain comes up in under a minute:
 
 ```bash
 docker compose -f docker-compose.local.yml up -d
@@ -157,42 +171,43 @@ npm install
 npx hardhat run scripts/deploy-local.ts --network local
 ```
 
-This spins up Besu, Blockscout, and Postgres locally; deploys the full
-contract suite and prints the addresses.
+That spins up Besu, Blockscout, and Postgres locally; deploys the
+full contract suite; and prints the addresses.
 
 ## Tests & coverage
 
 ```bash
 cd contracts
 npm test           # full Hardhat suite
-npm run coverage   # solidity-coverage, target ≥ 95 %
+npm run coverage   # solidity-coverage, ≥ 95 %
 npm run lint       # solhint + eslint
 ```
 
-CI runs all three on every push. Coverage gate is enforced.
+CI runs all three on every push. The coverage gate is enforced.
 
 ## Security
 
-WINTG is built with security as a non-negotiable. Every change goes
-through:
+We treat security as a hard requirement, not a feature. Every change
+goes through:
 
 - Solhint + Slither static analysis
 - ≥ 95 % branch coverage
-- Manual audit before mainnet token deploys
+- Manual review before any change that touches token economics or
+  consensus-adjacent code
 - Encrypted multisig key custody (AES-256-GCM + scrypt)
 
-Found a vulnerability? Don't open a public issue — email
-**security@wintg.group** with the details. We respond within 24 hours
-on weekdays. See [`SECURITY.md`](SECURITY.md) for the full disclosure
-process and reward range.
+Found a vulnerability? Please don't open a public issue. Email
+**security@wintg.group** with the details — we acknowledge within 24
+hours on weekdays. See [`SECURITY.md`](SECURITY.md) for the full
+disclosure process.
 
 ## Documentation
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — full system architecture
-- [`docs/TOKENOMICS.md`](docs/TOKENOMICS.md) — supply, allocations, vesting math
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system architecture
+- [`docs/TOKENOMICS.md`](docs/TOKENOMICS.md) — supply, allocations, vesting
 - [`docs/VALIDATOR_GUIDE.md`](docs/VALIDATOR_GUIDE.md) — running a node
 - [`docs/GAMING_GUIDE.md`](docs/GAMING_GUIDE.md) — building games on WINTG
-- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production deployment runbook
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production runbook
 - [`docs/FEES.md`](docs/FEES.md) — fee distribution and routing
 - [`docs/API.md`](docs/API.md) — RPC + WS reference
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to contribute
@@ -200,25 +215,25 @@ process and reward range.
 ## Contributing
 
 We accept PRs. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) for the
-process — short version: fork, branch, write tests, run lint+coverage,
-open the PR. Conventional Commits, please.
-
-For larger changes, open an issue first to discuss the design. We're
-happy to mentor first-time contributors on smaller items tagged
-`good-first-issue`.
+process — fork, branch, write tests, run lint and coverage, open the
+PR. Conventional Commits, please. For larger changes, open an issue
+first so we can discuss the design.
 
 ## License
 
-WINTG is released under the [Apache License 2.0](LICENSE). Contributions
-are licensed under the same terms unless explicitly noted.
+WINTG is released under the [Apache License 2.0](LICENSE).
+Contributions are accepted under the same license unless explicitly
+noted otherwise.
 
 ## Contact
 
-- Email: contact@wintg.group · security@wintg.group
-- Web: https://wintg.network
-- GitHub: https://github.com/wintg-grp/wkey-blockchain
+- **Email** — `contact@wintg.group` · `security@wintg.group`
+- **Web** — `https://wintg.network`
+- **Keybase** — `wintg`
+- **Telegram / Discord** — channels are being set up; check the
+  website for the current invites once they go live.
 
 ---
 
-WINTG is an open-source project initiated by the WINTG Group. Built in
-West Africa, for builders everywhere.
+WINTG is an open-source project initiated by the WINTG Group, in West
+Africa, for builders everywhere.

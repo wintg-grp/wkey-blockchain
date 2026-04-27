@@ -1,183 +1,240 @@
-# Guide Validateur WINTG
+# Validator Guide
 
-## Pour qui ?
+This guide explains how to run a validator on WINTG: what you need,
+how to apply, what the bond means, and how the partnership works
+once you're in the consensus set.
 
-Toute personne ou organisation invitée à rejoindre le set des validateurs WINTG (UCAO, banques UEMOA, partenaires institutionnels, validateurs DAO).
+WINTG runs IBFT 2.0 with an open candidacy on top. We don't pick
+validators in private. Anyone with the right setup can apply.
 
-## Pré-requis
+## Why become a validator
 
-### Hardware
+Validators are the people who actually run the chain. They produce
+blocks, finalise transactions, host RPC for the rest of the network,
+and keep the system honest. In return, validators receive 50 % of
+the fees collected on every block they produce, paid in WTG.
 
-| Ressource | Minimum | Recommandé |
-|---|---|---|
-| vCPU | 4 | 8 |
-| RAM | 8 GB | 16 GB |
-| Disque | 200 GB SSD | 500 GB NVMe |
-| Réseau | 100 Mbps | 1 Gbps |
-| Uptime | ≥ 99 % | ≥ 99.9 % |
+If you operate infrastructure already (DevOps, sysadmin, hosting
+business, university lab, payments operator), running a validator
+is a natural extension. We expect to grow the validator set over
+time as adoption increases.
 
-### OS et logiciel
+## Requirements
 
-- Ubuntu 22.04 LTS (ou 24.04)
-- OpenJDK 21
-- Hyperledger Besu ≥ 26.4.0
-- ufw, fail2ban, openssh-server
+### Hardware (minimum)
 
-### Réseau
+- 8 vCPU (modern x86-64 or ARM64)
+- 16 GB RAM
+- 200 GB NVMe SSD (we recommend 500 GB to leave headroom)
+- 100 Mbit/s symmetric network with a stable public IPv4
+- 99.9 % monthly uptime target
 
-- IP publique dédiée
-- Ports ouverts : `22/tcp` (SSH par clé), `30303/tcp+udp` (P2P Besu)
-- **Aucun port RPC public** (les requêtes utilisateurs vont sur les nœuds RPC dédiés, pas sur les validateurs)
+### Software
 
-## Procédure d'onboarding
+- Ubuntu 22.04 LTS or AlmaLinux 9 (other distros work but aren't
+  formally supported)
+- Hyperledger Besu 26.4.0 or later
+- A working firewall (ufw, csf, firewalld — any of them)
+- An NTP service (chronyd or systemd-timesyncd) — clock drift
+  causes consensus issues
 
-### 1. Provisionner le serveur et installer Besu
+### Operational
+
+- 24/7 on-call rotation (or willingness to be the on-call yourself)
+- A way for us to reach you in less than an hour for incidents
+- Encrypted backups of your validator key (the only thing you can't
+  reissue)
+
+## How the bond works
+
+When you apply, you post a bond denominated in **USD**. At launch the
+bond is **10 USD** worth of WTG. The contract reads a live WTG/USD
+price feed at the moment you apply and computes how much WTG that
+represents. You send that WTG along with your `applyAsValidator`
+call.
+
+Three things to know about the bond:
+
+1. **It stays locked** in the `ValidatorRegistry` contract while you
+   operate. You don't earn yield on it; it's collateral.
+2. **It's refunded in full when you exit cleanly.** When the team
+   removes you on your request (you want to stop, you want to
+   re-key, you want to migrate hardware), you get the remaining bond
+   back to the validator address.
+3. **It can be partially slashed for misbehavior.** Provable
+   misbehavior — equivocation, signing two blocks at the same height,
+   sustained censorship — triggers a partial slash. The slashed
+   amount is sent to the Treasury; the rest stays withdrawable on
+   exit. We don't have whole-bond slashing. We don't surprise
+   validators with slashing.
+
+The DAO can change the bond amount via a vote. Existing bonds are
+not retroactively re-priced; only new applications use the new
+threshold.
+
+## How the application flow works
+
+### 1. Bring up the node
+
+Sync to the head of the chain. You can do this in about a day on
+mainnet; faster on testnet.
 
 ```bash
-ssh root@validator-XX.example.com
-git clone https://github.com/wintg-grp/wkey-blockchain.git /opt/wintg
-cd /opt/wintg
+git clone https://github.com/wintg-grp/wkey-blockchain.git
+cd wkey-blockchain
 sudo ./scripts/setup-validator.sh mainnet
 ```
 
-À la fin du script, ton **adresse de validateur** est affichée :
-
-```
-✓ Clé validateur générée. Adresse : 0xABCDEF...123456
-```
-
-**📌 Communique cette adresse à l'équipe WINTG** par canal sécurisé (PGP).
-
-### 2. Configurer la clé en sécurité
+Wait until `eth_blockNumber` returns the same height as
+`https://rpc.wintg.network`. While you wait, generate the
+validator address from the node key:
 
 ```bash
-# La clé est dans /etc/besu/keys/key (chiffrée AES-256 via le wrapper systemd)
-# Backup IMMÉDIAT :
-sudo /opt/wintg/scripts/backup-keys.sh
-# → /var/backups/besu/besu-keys-<timestamp>.tar.gz.enc
-# → Copier dans 3 emplacements géographiques distincts
+sudo -u besu besu --data-path=/var/lib/besu/data \
+  public-key export-address | tail -1
 ```
 
-Recommandation forte : intégrer un sidecar **HashiCorp Vault** ou **AWS KMS / GCP KMS** pour le déchiffrement à la volée au lieu de la passphrase shell.
+Save this address. It's what you'll register on-chain.
 
-### 3. Synchronisation initiale
-
-```bash
-sudo systemctl status besu
-sudo journalctl -u besu -f
-./scripts/health-check.sh
-```
-
-Sync attendue : quelques minutes à quelques heures selon la taille de la chaîne.
-
-### 4. Demande d'inclusion (vote IBFT)
-
-À ce stade, tu es un **full node**, pas encore un validateur.
-
-L'équipe WINTG (ou un validateur existant) lance un vote pour t'inclure :
-
-```bash
-# Sur un validateur existant :
-./scripts/add-validator.sh 0xVOTRE_ADRESSE
-```
-
-Le vote se propage. Quand la majorité (> N/2) des validateurs courants a voté, tu es **promu validateur** automatiquement au prochain epoch (≤ 30 000 blocs).
-
-### 5. Vérification du rôle
+### 2. Capture the enode URL
 
 ```bash
 curl -s -X POST -H "Content-Type: application/json" \
-  --data '{"jsonrpc":"2.0","method":"ibft_getValidatorsByBlockNumber","params":["latest"],"id":1}' \
-  http://127.0.0.1:8545 | jq
+  --data '{"jsonrpc":"2.0","method":"net_enode","params":[],"id":1}' \
+  http://127.0.0.1:8545 | jq -r .result
 ```
 
-Tu dois apparaître dans la liste retournée.
+That string starts with `enode://...`. Save it.
 
-À partir de là, ton nœud commence à proposer et signer des blocs en rotation.
+### 3. Apply on-chain
 
-## Obligations opérationnelles
+Send the application transaction to the `ValidatorRegistry` contract.
+The bond amount must be at least the value returned by
+`bondInWtgWei()` at the moment you submit.
 
-### Disponibilité
+Quick example with ethers:
 
-- ≥ 99 % uptime mensuel
-- Délai de réaction sur incidents critiques : < 1h (équipe d'astreinte)
-- Notification WINTG en cas de maintenance planifiée
+```ts
+const reg = new ethers.Contract(REGISTRY_ADDR, registryAbi, wallet);
+const required = await reg.bondInWtgWei();
 
-### Monitoring
+await reg.applyAsValidator(
+  validatorAddress,                            // the address you exported above
+  "Acme Datacenter",                           // public-facing name
+  "Acme Inc.",                                 // operator entity
+  "https://acme.example",                      // operator website
+  "EF24 PGP fingerprint here",                 // optional
+  "Lomé, Togo",                                // operator location
+  "enode://abc...@1.2.3.4:30303",              // your enode
+  { value: required }
+);
+```
 
-- Métriques Prometheus exposées en interne sur `:9545/metrics`
-- Logs systemd intacts (`journalctl -u besu`)
-- Healthcheck passing : `./scripts/health-check.sh`
+Your candidacy now shows up in `listCandidates()` with `status =
+Pending`.
 
-### Sécurité
+### 4. Coordinate with the existing validators
 
-- Clé validateur **jamais** sur disque non chiffré
-- SSH par clé uniquement, pas de mot de passe
-- Mise à jour de sécurité OS automatique (`unattended-upgrades`)
-- Fail2ban actif sur SSH
-- Audit logs revus hebdomadairement
-- Rotation de la clé tous les 6 mois (ou en cas de suspicion)
+Reach out to us on the channels listed below. We need to:
 
-### Communication
+- Verify you control the validator address (sign a challenge)
+- Verify your enode is reachable
+- Confirm operator details
+- Run a couple of soft tests on your node
 
-- Channel Telegram privé "wintg-validators"
-- Réunion mensuelle (Zoom)
-- Notification 24h avant maintenance
-- PGP pour échanges sensibles
+Once we're satisfied, we approve the candidacy on-chain. After that,
+existing validators run `ibft_proposeValidatorVote(true, <addr>)` on
+their own nodes. Once a quorum has voted, the consensus set updates
+at the next epoch and your node starts producing blocks.
 
-## Économie
+If we don't approve — for whatever reason — your bond is refunded
+in full and the candidacy is closed.
 
-- Récompense : **20 % des frais** de transaction de la chaîne
-- Distribution pro-rata des blocs validés (mesurée on-chain)
-- Pas d'inflation pré-staking phase 2
-- Aucun staking requis en phase 1 (consortium PoA)
+## Communication channels
 
-## Procédure de retrait
+We coordinate operationally on:
 
-Pour quitter le set des validateurs :
+- **Email** — `validators@wintg.group` (general),
+  `security@wintg.group` (incidents). Email is always open.
+- **Telegram** — operator channel. The invite link will be published
+  on `https://wintg.network` and shared directly with you when your
+  candidacy is approved. Setup is in progress.
+- **Discord** — same logic as Telegram. Setup is in progress.
+- **Keybase** — username `wintg`. We use this for sensitive ops
+  (signed messages, encrypted file exchange).
 
-1. Notifier l'équipe WINTG 30 jours à l'avance
-2. Un vote IBFT est lancé pour te retirer (`add-validator.sh ... false`)
-3. Une fois retiré, ton nœud reste full node ou peut être éteint
-4. Backup final + audit de sécurité avant arrêt
+If something is on fire, email and direct messaging take priority
+over public channels.
 
-## Slashing & sanctions
+## After you're in the consensus set
 
-IBFT 2.0 ne supporte pas le slashing automatique. La gouvernance WINTG peut :
+You're expected to:
 
-- **Avertissement** : disponibilité < 95 % pendant 1 mois
-- **Suspension temporaire** : non-conformité opérationnelle (ex. ports RPC ouverts publiquement)
-- **Retrait définitif** : faute grave (compromission, comportement byzantin avéré, conflit d'intérêts non déclaré)
+- Run the latest stable Besu release within 30 days of release
+- Apply security patches within 7 days of disclosure
+- Maintain the uptime target above
+- Acknowledge incident reports within an hour
+- Give 30 days' notice if you want to exit
 
-Décision via vote des validateurs restants (quorum > 2/3).
+You are **not** expected to:
 
-## Procédure d'urgence : panne validateur
+- Speak publicly on behalf of WINTG (that's our job)
+- Coordinate validator votes outside the agreed governance process
+- Run validator software other than the supported Besu version
 
-Si ton nœud crashe :
+## Exiting
 
-1. **Si tu as un hot standby** :
-   ```bash
-   ssh root@standby
-   sudo /opt/wintg/scripts/promote-standby.sh
-   ```
-2. **Sinon, restaure depuis backup** :
-   ```bash
-   sudo systemctl stop besu
-   # Restaurer /etc/besu/keys/ depuis backup chiffré
-   sudo systemctl start besu
-   ```
-3. **Notifier immédiatement** le canal Telegram validators
+To leave cleanly:
 
-## FAQ
+1. Email `validators@wintg.group` with 30 days' notice
+2. We coordinate the timing so the consensus set never drops below
+   the safe threshold
+3. We call `remove(yourValidator)` on the registry — your remaining
+   bond is refunded to the validator address in the same transaction
+4. We run `ibft_proposeValidatorVote(false, <addr>)` on the existing
+   nodes — your node is removed from consensus at the next epoch
+5. You shut your node down
 
-**Q : Combien gagne un validateur ?**
-R : Variable selon le volume de transactions. À T0 (faible volume) : ~0 WTG/jour. À 100k tx/jour avec fee moyen 0.001 WTG → 20 WTG/jour pour le pool, divisé par N validateurs. Le revenu sérieux arrive avec l'adoption (paiements, remittances).
+## Slashing in practice
 
-**Q : Puis-je faire tourner d'autres services sur le même serveur ?**
-R : Non recommandé. Le validateur doit avoir des ressources dédiées et un profil de sécurité strict. Co-location avec un explorer ou monitoring est tolérée mais non encouragée.
+We've designed the slashing to be predictable, not punitive. The
+intent is to make malicious or grossly negligent operation costly,
+not to penalise honest mistakes.
 
-**Q : Que se passe-t-il si plusieurs validateurs tombent en même temps ?**
-R : Si > N/3 sont down, la chaîne s'arrête (pas de finalité). Procédure d'urgence : redémarrer manuellement les validateurs, ou (cas extrême) régénérer le genesis.
+What gets slashed:
 
-**Q : Le hot standby a-t-il besoin de sa propre clé validateur ?**
-R : Oui, idéalement. Soit le standby a une clé séparée dans la liste des validateurs (recommandé phase 2+), soit il utilise la même clé que le primaire (phase 1 simple, mais ne jamais lancer les deux simultanément).
+- Signing two competing blocks at the same height (equivocation)
+- Sustained, deliberate censorship of valid transactions
+- Long-running consensus stalls clearly attributable to a single
+  validator
+
+What does not get slashed:
+
+- A reboot
+- A short outage
+- A configuration mistake that doesn't impact consensus
+- Anything caught and fixed within an hour
+
+The percentage is decided case by case based on impact. The cap is
+100 %; we have never run anything close to that.
+
+## Rewards
+
+Block fees are routed through the `FeeDistributor` contract on every
+distribution call:
+
+- 40 % Treasury
+- **50 % validator pool** — distributed pro-rata to active validators
+- 5 % burn (deflationary)
+- 5 % community pool (campaigns, airdrops, ecosystem grants)
+
+A keeper sweeps the validator coinbase into the distributor at a
+regular cadence; you can also sweep your own coinbase manually. The
+exact distribution math and contract addresses are in
+[`FEES.md`](FEES.md).
+
+## Questions
+
+The fastest way to get an answer is `validators@wintg.group`. If
+you're not yet in the operator channels, that's the right starting
+point. We read every message.

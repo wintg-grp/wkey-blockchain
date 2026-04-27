@@ -4,9 +4,11 @@ WINTG is built to be a friendly home for game studios. This guide walks
 through what we ship out of the box, how to think about on-chain
 economies for games, and what a typical integration looks like.
 
-If you're shipping a Web3 game and the existing chains are either too
-expensive (Ethereum L1), too slow (most BFT networks at high load), or
-too restrictive on contract size and gas, WINTG is worth a serious look.
+If you're shipping a Web3 game and need a chain that's cheap to
+transact on, fast enough to keep gameplay snappy, and permissive
+enough to let you deploy whatever you want, WINTG is for you. The
+sections below walk through the contracts, the patterns we recommend,
+and the patterns we suggest you avoid.
 
 ## What WINTG gives you for free
 
@@ -119,8 +121,8 @@ function redeem(
 }
 ```
 
-This pattern is well-established (OpenSea, Immutable, Skybound all use
-variations). Your server stays cheap; players pay micro-fees in WTG.
+This is a well-established pattern in Web3 gaming. Your server stays
+cheap; players pay micro-fees in WTG.
 
 ## Best practices we keep seeing
 
