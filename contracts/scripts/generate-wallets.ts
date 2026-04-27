@@ -12,11 +12,12 @@
  *   (interactif : demande la passphrase, écrit `wallets.encrypted.json`)
  */
 
-import { Wallet, randomBytes } from "ethers";
+import { Wallet } from "ethers";
 import { writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   createCipheriv,
+  randomBytes,
   scryptSync,
 } from "node:crypto";
 import * as readline from "node:readline";
