@@ -137,7 +137,7 @@ async function main() {
   console.log(`  ✓ Multicall3             ${addresses.Multicall3}`);
 
   const Reg = await ethers.getContractFactory("ValidatorRegistry");
-  const reg = await Reg.deploy(deployer.address);
+  const reg = await Reg.deploy(deployer.address, ethers.parseEther("100"));
   await reg.waitForDeployment();
   addresses.ValidatorRegistry = await reg.getAddress();
   console.log(`  ✓ ValidatorRegistry      ${addresses.ValidatorRegistry}`);
