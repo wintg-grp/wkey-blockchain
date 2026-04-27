@@ -88,8 +88,8 @@ const config: HardhatUserConfig = {
         network: "wintgTestnet",
         chainId: 22800,
         urls: {
-          apiURL: "https://testnet-scan.wintg.network/api",
-          browserURL: "https://testnet-scan.wintg.network",
+          apiURL: "https://scan.wintg.network/api",
+          browserURL: "https://scan.wintg.network",
         },
       },
     ],

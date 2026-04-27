@@ -24,7 +24,7 @@ Si tu mets tout sur le même serveur, utilise la même IP partout.
 |---|---|---|---|---:|
 | `testnet-rpc.wintg.network` | A | `49.13.156.47` | RPC HTTPS testnet | 300 |
 | `testnet-ws.wintg.network` | A | `49.13.156.47` | WebSocket testnet | 300 |
-| `testnet-scan.wintg.network` | A | `49.13.156.47` | Block Explorer testnet | 300 |
+| `scan.wintg.network` | A | `49.13.156.47` | Block Explorer testnet | 300 |
 | `faucet.wintg.network` | A | `49.13.156.47` | Faucet testnet | 300 |
 
 ## Site web et docs

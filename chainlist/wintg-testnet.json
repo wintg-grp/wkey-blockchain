@@ -23,7 +23,7 @@
   "explorers": [
     {
       "name": "WINTG Scan Testnet",
-      "url": "https://testnet-scan.wintg.network",
+      "url": "https://scan.wintg.network",
       "standard": "EIP3091"
     }
   ],

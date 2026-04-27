@@ -91,7 +91,7 @@ Pour chaque sous-domaine, fais ces étapes :
 
 Répète pour :
 - `testnet-ws.wintg.network`
-- `testnet-scan.wintg.network`
+- `scan.wintg.network`
 - `rpc.wintg.network` (mainnet futur)
 - `ws.wintg.network`
 - `scan.wintg.network`
@@ -169,10 +169,10 @@ cd /usr/local/directadmin/custombuild && ./build rewrite_confs
 systemctl reload nginx
 ```
 
-Pour `testnet-scan.wintg.network` (Blockscout, on l'installera après) :
+Pour `scan.wintg.network` (Blockscout, on l'installera après) :
 
 ```bash
-DOMAIN="testnet-scan.wintg.network"
+DOMAIN="scan.wintg.network"
 cat > /usr/local/directadmin/data/users/$USER/nginx_custom/$DOMAIN/server_https.CUSTOM.pre <<'NGINX'
     location / {
         proxy_pass http://127.0.0.1:4000;
@@ -241,7 +241,7 @@ Réseau personnalisé :
 | RPC URL | `https://testnet-rpc.wintg.network` |
 | Chain ID | `22800` |
 | Symbol | `WTG` |
-| Block Explorer | `https://testnet-scan.wintg.network` |
+| Block Explorer | `https://scan.wintg.network` |
 
 Importer un compte test : la **Hardhat account 0** (clé connue, **NE PAS UTILISER EN MAINNET**) :
 - Address : `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`
@@ -276,7 +276,7 @@ Adresses sauvegardées dans `contracts/deployments/wintgTestnet-local.json`.
 
 ---
 
-## 8. (Optionnel) Installer Blockscout pour `testnet-scan.wintg.network`
+## 8. (Optionnel) Installer Blockscout pour `scan.wintg.network`
 
 ```bash
 ssh root@72.61.231.11
@@ -302,7 +302,7 @@ docker compose up -d
 docker compose logs -f blockscout      # attendre l'indexation, ~5 min
 ```
 
-À la fin, `https://testnet-scan.wintg.network` affiche tes blocs et transactions.
+À la fin, `https://scan.wintg.network` affiche tes blocs et transactions.
 
 ---
 
@@ -370,7 +370,7 @@ sudo systemctl daemon-reload && sudo systemctl restart besu
 ```
 [ ] DNS testnet-rpc.wintg.network propagé (dig +short testnet-rpc.wintg.network)
 [ ] DNS testnet-ws.wintg.network propagé
-[ ] DNS testnet-scan.wintg.network propagé
+[ ] DNS scan.wintg.network propagé
 [ ] Besu installé via install-besu-almalinux.sh
 [ ] Besu produit des blocs (eth_blockNumber augmente)
 [ ] Sous-domaines ajoutés dans DirectAdmin

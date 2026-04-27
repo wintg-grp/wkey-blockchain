@@ -188,7 +188,7 @@ app.post("/api/drip", dripLimit, async (req: Request, res: Response, next: NextF
       ok: true,
       txHash: tx.hash,
       amountWTG: DRIP_AMOUNT_WTG.toString(),
-      explorer: `https://testnet-scan.wintg.network/tx/${tx.hash}`,
+      explorer: `https://scan.wintg.network/tx/${tx.hash}`,
     });
   } catch (err) {
     next(err);

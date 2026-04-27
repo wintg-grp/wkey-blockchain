@@ -78,7 +78,7 @@ export const TESTNET: WintgNetwork = {
   chainId: 22800,
   rpcUrl: "https://testnet-rpc.wintg.network",
   wsUrl: "wss://testnet-ws.wintg.network",
-  explorerUrl: "https://testnet-scan.wintg.network",
+  explorerUrl: "https://scan.wintg.network",
 };
 
 export const NETWORKS = { mainnet: MAINNET, testnet: TESTNET } as const;

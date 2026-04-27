@@ -17,7 +17,7 @@
 |---|---|
 | RPC HTTPS | `https://testnet-rpc.wintg.network` |
 | WebSocket | `wss://testnet-ws.wintg.network` |
-| Block Explorer | `https://testnet-scan.wintg.network` |
+| Block Explorer | `https://scan.wintg.network` |
 | Faucet | `https://faucet.wintg.network` |
 
 ## Configuration MetaMask
