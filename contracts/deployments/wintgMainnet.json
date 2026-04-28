@@ -1,0 +1,129 @@
+{
+  "network": "wintgMainnet",
+  "chainId": "2280",
+  "deployer": "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+  "timestamp": "2026-04-28T01:28:58.085Z",
+  "contracts": {
+    "PublicSaleVesting": {
+      "address": "0x69fDF43337fAbE160Fb9d3bA1C9E055b211702f6",
+      "constructorArgs": [
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        1777339737,
+        "120000000000000000000000000"
+      ],
+      "nonce": 0
+    },
+    "PrivateSaleVesting": {
+      "address": "0xfc47b44f7f34a405878b112f03B7A815881Fd6Ea",
+      "constructorArgs": [
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        1777339737,
+        "80000000000000000000000000"
+      ],
+      "nonce": 1
+    },
+    "TeamVesting": {
+      "address": "0x43e95ED419039A2904DbAB3C337524887133D571",
+      "constructorArgs": [
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        "0x591A136F56065E308FEa773302D9EFeA6b657642",
+        1777339737,
+        "150000000000000000000000000"
+      ],
+      "nonce": 2
+    },
+    "AdvisorsVesting": {
+      "address": "0xaB67995174baFccbFDe5DFE228fc9f563B085C4A",
+      "constructorArgs": [
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        "0x3F599BFC2Ab2322e897610e1baF402987aF4054e",
+        1777339737,
+        "30000000000000000000000000"
+      ],
+      "nonce": 3
+    },
+    "EcosystemVesting": {
+      "address": "0x92fb9E4C917a6C073038cf302B425195b43f7B71",
+      "constructorArgs": [
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        "0x4ac1F362052A5E58b778Cafb1CfC50c5877C6268",
+        1777339737,
+        "200000000000000000000000000"
+      ],
+      "nonce": 4
+    },
+    "AirdropVesting": {
+      "address": "0xe2cbb8EcE39C5832bc6853fC471c8Be23Fdbd091",
+      "constructorArgs": [
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        "0x0000000000000000000000000000000000000000000000000000000000000001",
+        1777339737,
+        "80000000000000000000000000"
+      ],
+      "nonce": 5
+    },
+    "StakingRewardsReserve": {
+      "address": "0x50256de2C07518dFf57d4f83Aee55EE7cBb0627A",
+      "constructorArgs": [
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        "150000000000000000000000000"
+      ],
+      "nonce": 6
+    },
+    "TreasuryVesting": {
+      "address": "0x3658956395826286b43B4e6652655F1257cA085b",
+      "constructorArgs": [
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        1777339737,
+        "100000000000000000000000000"
+      ],
+      "nonce": 7
+    },
+    "PartnersVesting": {
+      "address": "0x8EF89de7DA472186E7F5F3ac7DefB923B1d24A57",
+      "constructorArgs": [
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        "0xBBbC207f205a8bc49E3deA05F2eeFf99C45f173d",
+        1777339737,
+        "20000000000000000000000000"
+      ],
+      "nonce": 8
+    },
+    "WINTGTreasury": {
+      "address": "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+      "constructorArgs": [
+        [
+          "0x45226d416A7a56F2794D82D45Be30941eAaC9c94",
+          "0xFe581097c074944B5B87d9Fe1DaA16e7D89AB5Af",
+          "0x50253f10CfFb63d7Be12b374FEDb65Da4725a7f2",
+          "0x350ce31908B9639Cab66b2086F35372E7F1552C4",
+          "0xA943f800c4E461BCB3b3D67Bc054a6188010306D"
+        ],
+        3
+      ],
+      "nonce": 9
+    },
+    "BurnContract": {
+      "address": "0x2eCA645C4eC2598314B9D49B82cb970f666612C6",
+      "constructorArgs": [],
+      "nonce": 10
+    },
+    "FeeDistributor": {
+      "address": "0x108e60e6AC7068E9e9a9240a2345CaC6184d408E",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x30fD09A09bd310F64D3617ac1AA6A414C44615f5",
+        "0x2eCA645C4eC2598314B9D49B82cb970f666612C6",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ],
+      "nonce": 11
+    },
+    "WTGToken": {
+      "address": "0x59E27B7c9119fC5Ff04C855eEDfeD7c53f24b53C",
+      "constructorArgs": [],
+      "nonce": 12
+    }
+  }
+}
