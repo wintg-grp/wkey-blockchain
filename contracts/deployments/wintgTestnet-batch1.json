@@ -1,0 +1,49 @@
+{
+  "network": "wintgTestnet",
+  "chainId": "22800",
+  "deployer": "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+  "timestamp": "2026-04-28T16:57:59.466Z",
+  "contracts": {
+    "WintgChainMetadata": {
+      "address": "0xfE4CDB9a60974fb81C37f189159729Af7dC94A51",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xE5B0499d1d3C68Be619AC81eCb9cAa1dd1481018",
+        "WINTG",
+        "WINTG",
+        "WINTG",
+        "WTG"
+      ]
+    },
+    "VerificationRegistry": {
+      "address": "0x3178D163C443a8CE7B43755b4b99864b0C4F3b9F",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xD7989c042A1ce71F0fF00B4fAd66B4c6394C8EC6",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ]
+    },
+    "ERC20FactoryV2": {
+      "address": "0x4Bb77a323A33DB34ed0B421C44632E6312EA23d0",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x3178D163C443a8CE7B43755b4b99864b0C4F3b9F"
+      ]
+    },
+    "WintgMultiSender": {
+      "address": "0x789794A8715d3A31CEB15Ae4a661E052dB3D04eF",
+      "constructorArgs": []
+    }
+  },
+  "generatedAccounts": {
+    "verificationAdmin": {
+      "address": "0xD7989c042A1ce71F0fF00B4fAd66B4c6394C8EC6",
+      "encryptedKeystore": "{\"address\":\"d7989c042a1ce71f0ff00b4fad66b4c6394c8ec6\",\"id\":\"f7487932-06f7-41a4-92af-4e5d054745b9\",\"version\":3,\"Crypto\":{\"cipher\":\"aes-128-ctr\",\"cipherparams\":{\"iv\":\"fee510312ea1fa69c29555c6f8f4e135\"},\"ciphertext\":\"5a1d1e8b716be0cd734c63e835ffcfeede0f51d5e5420bc1dbf9e60ade75781f\",\"kdf\":\"scrypt\",\"kdfparams\":{\"salt\":\"2c1c53b817e1ef333611dba4f5209098b0f0448c60d4a0e8a98dc442e8fd9c16\",\"n\":131072,\"dklen\":32,\"p\":1,\"r\":8},\"mac\":\"a30089218659fb546a04e03f6af5a6a27fd9756dd43fb7a471d12a9e52d0d8e3\"},\"x-ethers\":{\"client\":\"ethers/6.16.0\",\"gethFilename\":\"UTC--2026-04-28T16-57-51.0Z--d7989c042a1ce71f0ff00b4fad66b4c6394c8ec6\",\"path\":\"m/44'/60'/0'/0/0\",\"locale\":\"en\",\"mnemonicCounter\":\"cd4b058a2b9142a2281fbf6c9d96d914\",\"mnemonicCiphertext\":\"4c78b1e25db5738ae85017492d56355b\",\"version\":\"0.1\"}}"
+    },
+    "chainAdmin": {
+      "address": "0xE5B0499d1d3C68Be619AC81eCb9cAa1dd1481018",
+      "encryptedKeystore": "{\"address\":\"e5b0499d1d3c68be619ac81ecb9caa1dd1481018\",\"id\":\"c5ed01a1-dc00-44f5-ae93-14183ab6743a\",\"version\":3,\"Crypto\":{\"cipher\":\"aes-128-ctr\",\"cipherparams\":{\"iv\":\"c7b42be887bae8ef8b15942e6c3efeb8\"},\"ciphertext\":\"3a852a0ba187cad68f28e62382819ef51ed9be7feb5d4d15c49181e9eb87989c\",\"kdf\":\"scrypt\",\"kdfparams\":{\"salt\":\"b388bbcc95ffe46f9d1e99aac37908ac1fba11a6af0d82df24fb579ccaabaad7\",\"n\":131072,\"dklen\":32,\"p\":1,\"r\":8},\"mac\":\"5fc45f32bd7932b9e5af348a7b24f78702e2f58e01c38c0b6d3489142ce1174f\"},\"x-ethers\":{\"client\":\"ethers/6.16.0\",\"gethFilename\":\"UTC--2026-04-28T16-57-53.0Z--e5b0499d1d3c68be619ac81ecb9caa1dd1481018\",\"path\":\"m/44'/60'/0'/0/0\",\"locale\":\"en\",\"mnemonicCounter\":\"41335b828be94e355b5181d5d0748133\",\"mnemonicCiphertext\":\"ede912b93e31ba1f725874458c3a14f9\",\"version\":\"0.1\"}}"
+    }
+  }
+}
