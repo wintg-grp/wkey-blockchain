@@ -1,0 +1,28 @@
+{
+  "network": "wintgTestnet",
+  "chainId": "22800",
+  "deployer": "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+  "timestamp": "2026-04-28T22:47:36.354Z",
+  "contracts": {
+    "AppRegistry": {
+      "address": "0xD33fC793731d31770dB95aB47b4539d117eFDD64",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xD7989c042A1ce71F0fF00B4fAd66B4c6394C8EC6"
+      ]
+    },
+    "WintgPaymaster": {
+      "address": "0x9900f7e96350DfA088f7C0D73A3A9ea378dBe733",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xD7989c042A1ce71F0fF00B4fAd66B4c6394C8EC6",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ]
+    },
+    "Multicall3": {
+      "address": "0x8239Acf8A84783bB88e4fF59dB30E3E727272289",
+      "constructorArgs": []
+    }
+  }
+}
