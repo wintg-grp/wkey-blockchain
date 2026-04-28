@@ -1,0 +1,32 @@
+{
+  "network": "wintgTestnet",
+  "chainId": "22800",
+  "deployer": "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+  "timestamp": "2026-04-28T22:14:21.886Z",
+  "contracts": {
+    "WtgDomainRegistryV2": {
+      "address": "0x5C09092840D5098eB7AEA4a7C47cAFDFb951e83D",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ]
+    },
+    "ProfileRegistry": {
+      "address": "0x54f0502d91265A31c443100eb4a32DBf5D8C926e",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ]
+    },
+    "VerifiableCredentialsRegistry": {
+      "address": "0x7C6e6F7120E8c71787342f62EB92F3d11A6918FF",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ]
+    },
+    "SocialRecoveryModule": {
+      "address": "0x03f70099045946AccbA5d1C937ABeECE8548f4B8",
+      "constructorArgs": []
+    }
+  }
+}
