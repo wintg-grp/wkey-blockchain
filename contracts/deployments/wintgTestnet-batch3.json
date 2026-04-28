@@ -1,0 +1,40 @@
+{
+  "network": "wintgTestnet",
+  "chainId": "22800",
+  "deployer": "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+  "timestamp": "2026-04-28T22:05:51.295Z",
+  "contracts": {
+    "WrappedWTG": {
+      "address": "0x595CaeD7E38d34cFc4013af5bF86B0D38E115351",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x3178D163C443a8CE7B43755b4b99864b0C4F3b9F",
+        ""
+      ]
+    },
+    "WKEYToken": {
+      "address": "0xEf6df253dF3A24160233564efDdcFa8EB99Ea337",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x3178D163C443a8CE7B43755b4b99864b0C4F3b9F",
+        ""
+      ]
+    },
+    "USDWToken": {
+      "address": "0x401cA097F6105384A3cd327bA86AE950E9A84Ef8",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x3178D163C443a8CE7B43755b4b99864b0C4F3b9F",
+        ""
+      ]
+    },
+    "WCFAToken": {
+      "address": "0x23100037E793357c5105aC82A75fe5aC39f22BE3",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x3178D163C443a8CE7B43755b4b99864b0C4F3b9F",
+        ""
+      ]
+    }
+  }
+}
