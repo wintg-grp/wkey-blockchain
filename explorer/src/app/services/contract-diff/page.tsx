@@ -1,17 +1,16 @@
 "use client";
 
-import { ComingSoonPage } from "@/components/ComingSoon";
-import { useSettings } from "@/lib/settings";
+import { FeaturePreview } from "@/components/FeaturePreview";
 import { networkFromParam } from "@/lib/rpc";
 
 export const dynamic = "force-dynamic";
 
 export default function Page({ searchParams }: { searchParams: { net?: string } }) {
-  const { t } = useSettings();
   return (
-    <ComingSoonPage
+    <FeaturePreview
       network={networkFromParam(searchParams.net)}
-      title={t["services"]["contractDiff"]}
+      fr={{"title":"Comparateur de contrats","description":"Comparez deux contrats vérifiés côte à côte. Identifiez rapidement les différences entre versions ou entre forks."}}
+      en={{"title":"Contract diff checker","description":"Compare two verified contracts side by side. Quickly identify differences between versions or forks."}}
     />
   );
 }

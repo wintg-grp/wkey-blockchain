@@ -1,17 +1,16 @@
 "use client";
 
-import { ComingSoonPage } from "@/components/ComingSoon";
-import { useSettings } from "@/lib/settings";
+import { FeaturePreview } from "@/components/FeaturePreview";
 import { networkFromParam } from "@/lib/rpc";
 
 export const dynamic = "force-dynamic";
 
 export default function Page({ searchParams }: { searchParams: { net?: string } }) {
-  const { t } = useSettings();
   return (
-    <ComingSoonPage
+    <FeaturePreview
       network={networkFromParam(searchParams.net)}
-      title={t["services"]["newsletter"]}
+      fr={{"title":"Newsletter","description":"Abonnez-vous pour recevoir les annonces, les nouveautés du protocole et les tutoriels directement dans votre boîte mail."}}
+      en={{"title":"Newsletter","description":"Subscribe to receive protocol announcements, product updates and tutorials directly in your inbox."}}
     />
   );
 }

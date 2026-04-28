@@ -4,83 +4,105 @@ import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { useSettings } from "@/lib/settings";
 import { networkFromParam } from "@/lib/rpc";
+import { formatPriceFromWtg } from "@/lib/price";
 
 export const dynamic = "force-dynamic";
 
-export default function TokensPage({
-  searchParams,
-}: {
-  searchParams: { net?: string };
-}) {
-  const network = networkFromParam(searchParams.net);
-  const { t } = useSettings();
+interface TokenRow {
+  slug: string;
+  symbol: string;
+  name: string;
+  type: "native" | "wrapped" | "erc20";
+  contract?: string;
+  supply?: string;
+  pricePerWtg: number;
+  glyph: string;
+  glyphBg: string;
+}
 
-  const wtgWrapper = "0x59E27B7c9119fC5Ff04C855eEDfeD7c53f24b53C";
-  const erc20Factory = ""; // TODO once tokens are deployed
+const ROWS: TokenRow[] = [
+  {
+    slug: "wtg",
+    symbol: "WTG",
+    name: "WINTG",
+    type: "native",
+    supply: "1 000 000 000",
+    pricePerWtg: 1,
+    glyph: "W",
+    glyphBg: "bg-wintg-gradient",
+  },
+  {
+    slug: "wwtg",
+    symbol: "WWTG",
+    name: "Wrapped WINTG",
+    type: "wrapped",
+    contract: "0x59E27B7c9119fC5Ff04C855eEDfeD7c53f24b53C",
+    pricePerWtg: 1,
+    glyph: "W",
+    glyphBg: "bg-inverse text-inverse-fg",
+  },
+];
+
+export default function TokensPage({ searchParams }: { searchParams: { net?: string } }) {
+  const network = networkFromParam(searchParams.net);
+  const { lang, currency } = useSettings();
+  const fr = lang === "fr";
 
   return (
     <PageShell network={network}>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-10">
-        <h1 className="display text-5xl sm:text-7xl text-text">{t.nav.tokens}</h1>
-        <p className="text-text-muted mt-2 max-w-xl">
-          ERC-20 tokens issued on WINTG appear here. The list is populated as tokens are minted via the public token factory.
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <h1 className="display text-5xl sm:text-7xl text-text">{fr ? "Tokens" : "Tokens"}</h1>
+        <p className="mt-3 text-text-muted max-w-2xl">
+          {fr
+            ? "Tous les tokens disponibles sur la chaîne WINTG. Cliquez sur une ligne pour voir les détails du token."
+            : "All tokens available on the WINTG chain. Click a row to see the token details."}
         </p>
 
-        <section className="card p-6 sm:p-8 mt-8">
-          <h2 className="display text-2xl text-text mb-4">Featured</h2>
-          <ul className="divide-y divide-border">
-            <li className="py-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-wintg-gradient grid place-items-center font-display text-accent-fg text-xl">
-                W
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-text">WTG</div>
-                <div className="text-xs text-text-muted">Native asset · 1 B supply</div>
-              </div>
-              <div className="text-right">
-                <div className="text-text font-semibold">1 WTG = 50 CFA</div>
-                <div className="text-[10px] text-text-faint uppercase tracking-wider">{t.home.initialOffer}</div>
-              </div>
-            </li>
-            <li className="py-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-surface-2 grid place-items-center font-display text-text text-xl">
-                W
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-text">WWTG · Wrapped WINTG</div>
-                <div className="text-xs text-text-muted">ERC-20 wrapper · 1:1 with native WTG</div>
-              </div>
-              <Link
-                href={`/address/${wtgWrapper}?net=${network}`}
-                className="link-accent text-sm"
-              >
-                View →
-              </Link>
-            </li>
+        <section className="card mt-10 overflow-hidden">
+          <div className="grid grid-cols-12 gap-3 px-5 py-3 text-[10px] uppercase tracking-wider font-bold text-text-muted border-b border-border">
+            <div className="col-span-1">#</div>
+            <div className="col-span-5">{fr ? "Token" : "Token"}</div>
+            <div className="col-span-2">{fr ? "Type" : "Type"}</div>
+            <div className="col-span-2 text-right">{fr ? "Supply" : "Supply"}</div>
+            <div className="col-span-2 text-right">{fr ? "Prix" : "Price"}</div>
+          </div>
+          <ul>
+            {ROWS.map((r, i) => (
+              <li key={r.slug}>
+                <Link
+                  href={`/token/${r.slug}?net=${network}`}
+                  className="grid grid-cols-12 gap-3 px-5 py-4 items-center border-b border-border last:border-b-0 hover:bg-surface-2 transition-colors"
+                >
+                  <div className="col-span-1 text-text-muted">{i + 1}</div>
+                  <div className="col-span-5 flex items-center gap-3">
+                    <div className={`w-11 h-11 rounded-full grid place-items-center font-display text-xl ${r.glyphBg}`}>
+                      {r.glyph}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-text">{r.name}</div>
+                      <div className="text-xs text-text-muted">{r.symbol}</div>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="pill bg-surface-2 text-text-muted uppercase text-[10px] tracking-wider">
+                      {r.type === "native" ? (fr ? "Natif" : "Native") : r.type.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="col-span-2 text-right text-sm text-text-muted">{r.supply ?? "—"}</div>
+                  <div className="col-span-2 text-right">
+                    <div className="text-text font-semibold">{formatPriceFromWtg(r.pricePerWtg, currency)}</div>
+                  </div>
+                </Link>
+              </li>
+            ))}
           </ul>
         </section>
 
-        <section className="card p-6 sm:p-8 mt-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h2 className="display text-2xl text-text">Community tokens</h2>
-              <p className="text-text-muted mt-1 text-sm">
-                Anyone can deploy an ERC-20 on WINTG via the public factory.
-              </p>
-            </div>
-            {erc20Factory ? (
-              <Link href={`/address/${erc20Factory}?net=${network}`} className="btn-primary">
-                Open factory
-              </Link>
-            ) : (
-              <span className="pill bg-surface-2 text-text-muted">Soon</span>
-            )}
-          </div>
-          <div className="mt-6 text-center text-text-muted text-sm py-12">
-            No community tokens yet. Be the first to ship one — full guide on{" "}
-            <a href="https://doc.wintg.network" className="link-accent">doc.wintg.network</a>.
-          </div>
-        </section>
+        <p className="mt-6 text-xs text-text-muted">
+          {fr
+            ? "Les tokens créés via les factories publiques apparaîtront automatiquement ici une fois l'indexeur mis en ligne."
+            : "Tokens minted through the public factories will surface here automatically once the indexer ships."}
+        </p>
       </div>
     </PageShell>
   );

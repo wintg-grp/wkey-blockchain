@@ -4,10 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { useSettings, type Theme, type Currency } from "@/lib/settings";
 import type { Lang } from "@/lib/i18n/dict";
 
+// Sliders/equalizer icon — feels more like an in-app preferences control
+// than a literal "gear", and reads better at small sizes.
 const SETTINGS_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <line x1="4"  y1="6"  x2="4"  y2="18" />
+    <circle cx="4"  cy="9"  r="2" fill="currentColor" stroke="none" />
+    <line x1="12" y1="6"  x2="12" y2="18" />
+    <circle cx="12" cy="14" r="2" fill="currentColor" stroke="none" />
+    <line x1="20" y1="6"  x2="20" y2="18" />
+    <circle cx="20" cy="10" r="2" fill="currentColor" stroke="none" />
   </svg>
 );
 

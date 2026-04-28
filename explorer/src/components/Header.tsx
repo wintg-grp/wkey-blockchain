@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
 import { NetworkSwitcher } from "./NetworkSwitcher";
-import { SearchBar } from "./SearchBar";
 import { MegaMenu, type MegaItem } from "./MegaMenu";
 import { SettingsMenu } from "./SettingsMenu";
 import { useSettings } from "@/lib/settings";
@@ -13,6 +12,14 @@ import type { NetworkKey } from "@/lib/networks";
 export function Header({ network }: { network: NetworkKey }) {
   const { t } = useSettings();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (mobileOpen) document.body.style.overflow = "hidden";
@@ -43,8 +50,8 @@ export function Header({ network }: { network: NetworkKey }) {
       { label: t.services.chat,            href: "/services/chat" },
     ],
     [
-      { label: t.services.apiPlans,    href: "/api-plans" },
-      { label: t.services.apiDocs,     href: "https://doc.wintg.network" },
+      { label: t.services.apiPlans, href: "/api-plans" },
+      { label: t.services.apiDocs,  href: "https://doc.wintg.network" },
     ],
     [
       { label: t.services.codeReader,       href: "/services/code-reader" },
@@ -66,75 +73,52 @@ export function Header({ network }: { network: NetworkKey }) {
   ];
 
   return (
-    <header className="sticky top-0 z-30 backdrop-blur-md bg-bg/80 border-b border-border">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 relative">
-        <Logo />
+    <div className="sticky top-0 z-30 px-3 sm:px-4 pt-3 sm:pt-4">
+      <header
+        className={`max-w-[1400px] mx-auto rounded-2xl sm:rounded-[28px] border border-border transition-all
+          ${scrolled
+            ? "bg-bg/85 backdrop-blur-md shadow-flat"
+            : "bg-surface/70 backdrop-blur-sm"}
+        `}
+      >
+        <div className="px-3 sm:px-5 py-3 flex items-center gap-3 relative">
+          <Logo />
 
-        {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-1 ml-2">
-          <Link
-            href="/blocks"
-            className="px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 rounded-lg transition-colors focus-ring"
-          >
-            {t.nav.blocks}
-          </Link>
-          <Link
-            href="/txs"
-            className="px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 rounded-lg transition-colors focus-ring"
-          >
-            {t.nav.txs}
-          </Link>
-          <Link
-            href="/tokens"
-            className="px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 rounded-lg transition-colors focus-ring"
-          >
-            {t.nav.tokens}
-          </Link>
-          <Link
-            href="/nfts"
-            className="px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 rounded-lg transition-colors focus-ring"
-          >
-            {t.nav.nfts}
-          </Link>
-          <MegaMenu label={t.nav.tools}    groups={[{ items: tools }]} />
-          <MegaMenu label={t.nav.explore}  groups={[{ items: explore }]} />
-          <MegaMenu label={t.nav.services} groups={services.map((items) => ({ items }))} />
-        </nav>
+          <nav className="hidden lg:flex items-center gap-0.5 ml-2">
+            <Link href="/blocks" className="px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 rounded-xl transition-colors focus-ring">
+              {t.nav.blocks}
+            </Link>
+            <Link href="/txs" className="px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 rounded-xl transition-colors focus-ring">
+              {t.nav.txs}
+            </Link>
+            <Link href="/tokens" className="px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 rounded-xl transition-colors focus-ring">
+              {t.nav.tokens}
+            </Link>
+            <Link href="/nfts" className="px-3 py-2 text-sm font-semibold text-text hover:bg-surface-2 rounded-xl transition-colors focus-ring">
+              {t.nav.nfts}
+            </Link>
+            <MegaMenu label={t.nav.tools}    groups={[{ items: tools }]} />
+            <MegaMenu label={t.nav.explore}  groups={[{ items: explore }]} />
+            <MegaMenu label={t.nav.services} groups={services.map((items) => ({ items }))} />
+          </nav>
 
-        <div className="hidden md:block flex-1 max-w-md mx-auto">
-          <SearchBar />
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+            <NetworkSwitcher current={network} />
+            <SettingsMenu />
+
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden p-2 rounded-xl hover:bg-surface-2 transition-colors focus-ring"
+              aria-label="Menu"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
         </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          <NetworkSwitcher current={network} />
-          <SettingsMenu />
-          <button
-            type="button"
-            disabled
-            title="Coming soon"
-            className="hidden md:inline-flex btn-inverse !py-2 !px-4 opacity-60 cursor-not-allowed"
-          >
-            {t.nav.connectWallet}
-          </button>
-
-          {/* Mobile burger */}
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="lg:hidden btn-ghost !px-3"
-            aria-label="Menu"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
-              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile search bar */}
-      <div className="md:hidden px-4 pb-3">
-        <SearchBar />
-      </div>
+      </header>
 
       {/* Mobile drawer */}
       {mobileOpen && (
@@ -143,10 +127,10 @@ export function Header({ network }: { network: NetworkKey }) {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative ml-auto h-full w-[85%] max-w-sm bg-bg border-l border-border overflow-y-auto p-6 animate-fade-in-up">
+          <div className="relative ml-auto h-full w-[88%] max-w-sm bg-bg border-l border-border overflow-y-auto p-6 animate-fade-in-up">
             <div className="flex items-center justify-between mb-6">
               <Logo />
-              <button onClick={() => setMobileOpen(false)} className="btn-ghost !px-3" aria-label="Close">
+              <button onClick={() => setMobileOpen(false)} className="p-2 rounded-xl hover:bg-surface-2" aria-label="Close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
                   <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
                 </svg>
@@ -162,7 +146,7 @@ export function Header({ network }: { network: NetworkKey }) {
           </div>
         </div>
       )}
-    </header>
+    </div>
   );
 }
 

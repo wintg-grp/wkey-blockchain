@@ -1,17 +1,16 @@
 "use client";
 
-import { ComingSoonPage } from "@/components/ComingSoon";
-import { useSettings } from "@/lib/settings";
+import { FeaturePreview } from "@/components/FeaturePreview";
 import { networkFromParam } from "@/lib/rpc";
 
 export const dynamic = "force-dynamic";
 
 export default function Page({ searchParams }: { searchParams: { net?: string } }) {
-  const { t } = useSettings();
   return (
-    <ComingSoonPage
+    <FeaturePreview
       network={networkFromParam(searchParams.net)}
-      title={t["services"]["contractSearch"]}
+      fr={{"title":"Recherche de smart contracts","description":"Recherchez des contrats par nom, par signature de fonction, par interface (ERC-20, ERC-721, etc.) ou par auteur."}}
+      en={{"title":"Smart contract search","description":"Search contracts by name, function signature, interface (ERC-20, ERC-721, etc.) or author."}}
     />
   );
 }

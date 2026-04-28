@@ -1,11 +1,46 @@
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { HashLink } from "@/components/AddressLink";
+import { CopyButton } from "@/components/Copy";
 import { getClient, networkFromParam } from "@/lib/rpc";
 import { relativeTime } from "@/lib/format";
 
 export const revalidate = 0;
 const PER_PAGE = 50;
+
+function MiniStat({
+  label,
+  value,
+  hint,
+  variant = "default",
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+  variant?: "default" | "accent" | "inverse";
+}) {
+  const klass =
+    variant === "inverse"
+      ? "card-inverse p-5"
+      : variant === "accent"
+        ? "p-5 rounded-3xl bg-wintg-gradient text-accent-fg"
+        : "card p-5";
+  return (
+    <div className={klass}>
+      <div className={`text-[10px] uppercase tracking-[0.18em] font-bold ${variant === "default" ? "text-text-muted" : "opacity-80"}`}>
+        {label}
+      </div>
+      <div className="mt-1.5 font-display text-3xl sm:text-4xl leading-none tracking-tight-display">
+        {value}
+      </div>
+      {hint && (
+        <div className={`mt-1 text-xs ${variant === "default" ? "text-text-muted" : "opacity-70"}`}>
+          {hint}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default async function BlocksPage({
   searchParams,
@@ -32,13 +67,27 @@ export default async function BlocksPage({
   const newerFrom = fromParam < head ? fromParam + BigInt(PER_PAGE) : null;
   const newerCapped = newerFrom !== null ? (newerFrom > head ? head : newerFrom) : null;
 
+  const validBlocks = blocks.filter(Boolean) as NonNullable<(typeof blocks)[number]>[];
+  const totalTx = validBlocks.reduce((acc, b) => acc + b.transactions.length, 0);
+  const avgGas = validBlocks.length
+    ? Math.round(validBlocks.reduce((a, b) => a + Number(b.gasUsed), 0) / validBlocks.length)
+    : 0;
+  const validators = new Set(validBlocks.map((b) => b.miner.toLowerCase()));
+
   return (
     <PageShell network={network}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-10">
         <h1 className="display text-5xl sm:text-7xl text-text">Blocks</h1>
         <p className="text-text-muted mt-2">
-          {head.toString()} blocks produced on {network}.
+          Live block production on {network} · {head.toString()} blocks total.
         </p>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-8">
+          <MiniStat variant="accent" label="Latest height" value={`#${head.toString()}`} hint={network === "mainnet" ? "Chain 2280" : "Chain 22800"} />
+          <MiniStat label="Tx in this page" value={totalTx} hint={`across ${validBlocks.length} blocks`} />
+          <MiniStat label="Avg gas used" value={avgGas.toLocaleString("fr-FR")} hint="per block" />
+          <MiniStat variant="inverse" label="Active validators" value={validators.size} hint="seen in this page" />
+        </div>
 
         <section className="card mt-8 overflow-hidden">
           <div className="grid grid-cols-12 gap-2 px-4 sm:px-6 py-3 text-[10px] uppercase tracking-wider font-bold text-text-muted border-b border-border">
@@ -49,31 +98,29 @@ export default async function BlocksPage({
             <div className="col-span-3 text-right">When</div>
           </div>
           <ul>
-            {blocks.filter(Boolean).map((b) => {
-              if (!b) return null;
-              return (
-                <li
-                  key={b.hash}
-                  className="grid grid-cols-12 gap-2 px-4 sm:px-6 py-3 items-center border-b border-border last:border-b-0 hover:bg-surface-2 transition-colors"
-                >
-                  <div className="col-span-2 font-bold text-text">
-                    <Link href={`/block/${b.number}?net=${network}`} className="hover:text-accent">
-                      #{b.number?.toString()}
-                    </Link>
-                  </div>
-                  <div className="col-span-3">
-                    <HashLink hash={b.hash} network={network} type="block" />
-                  </div>
-                  <div className="col-span-3">
-                    <HashLink hash={b.miner} network={network} type="block" />
-                  </div>
-                  <div className="col-span-1 text-right text-text-muted">{b.transactions.length}</div>
-                  <div className="col-span-3 text-right text-text-muted text-sm">
-                    {relativeTime(b.timestamp)}
-                  </div>
-                </li>
-              );
-            })}
+            {validBlocks.map((b) => (
+              <li
+                key={b.hash}
+                className="grid grid-cols-12 gap-2 px-4 sm:px-6 py-3 items-center border-b border-border last:border-b-0 hover:bg-surface-2 transition-colors"
+              >
+                <div className="col-span-2 font-bold text-text">
+                  <Link href={`/block/${b.number}?net=${network}`} className="hover:text-accent">
+                    #{b.number?.toString()}
+                  </Link>
+                </div>
+                <div className="col-span-3 inline-flex items-center gap-1">
+                  <HashLink hash={b.hash} network={network} type="block" />
+                  <CopyButton value={b.hash} size={14} />
+                </div>
+                <div className="col-span-3">
+                  <HashLink hash={b.miner} network={network} type="block" />
+                </div>
+                <div className="col-span-1 text-right text-text-muted">{b.transactions.length}</div>
+                <div className="col-span-3 text-right text-text-muted text-sm">
+                  {relativeTime(b.timestamp)}
+                </div>
+              </li>
+            ))}
           </ul>
         </section>
 

@@ -3,10 +3,45 @@ import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { DetailRow } from "@/components/DetailRow";
 import { AddressLink } from "@/components/AddressLink";
+import { CopyButton } from "@/components/Copy";
 import { getClient, networkFromParam } from "@/lib/rpc";
 import { formatWtg, gweiFromWei, isTxHash, relativeTime } from "@/lib/format";
 
 export const revalidate = 0;
+
+function MiniStat({
+  label,
+  value,
+  hint,
+  variant = "default",
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+  variant?: "default" | "accent" | "inverse";
+}) {
+  const klass =
+    variant === "inverse"
+      ? "card-inverse p-5"
+      : variant === "accent"
+        ? "p-5 rounded-3xl bg-wintg-gradient text-accent-fg"
+        : "card p-5";
+  return (
+    <div className={klass}>
+      <div className={`text-[10px] uppercase tracking-[0.18em] font-bold ${variant === "default" ? "text-text-muted" : "opacity-80"}`}>
+        {label}
+      </div>
+      <div className="mt-1.5 font-display text-2xl sm:text-3xl leading-none tracking-tight-display">
+        {value}
+      </div>
+      {hint && (
+        <div className={`mt-1 text-xs ${variant === "default" ? "text-text-muted" : "opacity-70"}`}>
+          {hint}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default async function TxPage({
   params,
@@ -37,7 +72,9 @@ export default async function TxPage({
         <nav className="text-sm text-text-muted mb-4">
           <Link href={`/?net=${network}`} className="hover:text-text">Home</Link>
           <span className="mx-2 text-text-faint">/</span>
-          <span className="text-text">Transaction</span>
+          <Link href={`/txs?net=${network}`} className="hover:text-text">Transactions</Link>
+          <span className="mx-2 text-text-faint">/</span>
+          <span className="text-text mono">{hash.slice(0, 10)}…</span>
         </nav>
 
         <div className="flex flex-wrap items-baseline gap-4 mb-6">
@@ -59,9 +96,28 @@ export default async function TxPage({
           )}
         </div>
 
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          <MiniStat variant="accent" label="Value" value={formatWtg(tx.value)} hint="WTG" />
+          <MiniStat label="Fee" value={fee ? formatWtg(fee) : "—"} hint="WTG" />
+          <MiniStat
+            label="Gas used"
+            value={receipt ? receipt.gasUsed.toString() : "—"}
+            hint={receipt ? `× ${gweiFromWei(receipt.effectiveGasPrice)} gwei` : ""}
+          />
+          <MiniStat
+            variant="inverse"
+            label="Block"
+            value={tx.blockNumber !== null ? `#${tx.blockNumber}` : "pending"}
+            hint={block ? relativeTime(block.timestamp) : ""}
+          />
+        </div>
+
         <section className="card p-6 sm:p-8">
           <DetailRow label="Transaction hash">
-            <span className="mono break-all">{tx.hash}</span>
+            <span className="inline-flex items-center gap-2">
+              <span className="mono break-all">{tx.hash}</span>
+              <CopyButton value={tx.hash} />
+            </span>
           </DetailRow>
           <DetailRow label="Block">
             {tx.blockNumber !== null && (
@@ -74,18 +130,25 @@ export default async function TxPage({
             )}
           </DetailRow>
           <DetailRow label="From">
-            <AddressLink address={tx.from} network={network} truncate={false} />
+            <span className="inline-flex items-center gap-2 flex-wrap">
+              <AddressLink address={tx.from} network={network} truncate={false} />
+              <CopyButton value={tx.from} />
+            </span>
           </DetailRow>
           <DetailRow label="To">
             {tx.to ? (
-              <AddressLink address={tx.to} network={network} truncate={false} />
+              <span className="inline-flex items-center gap-2 flex-wrap">
+                <AddressLink address={tx.to} network={network} truncate={false} />
+                <CopyButton value={tx.to} />
+              </span>
             ) : (
               <span className="text-text-faint italic">Contract creation</span>
             )}
             {receipt?.contractAddress && (
-              <div className="mt-1 text-xs text-text-muted">
+              <div className="mt-1 text-xs text-text-muted inline-flex items-center gap-2 flex-wrap">
                 Created contract:{" "}
                 <AddressLink address={receipt.contractAddress} network={network} truncate={false} />
+                <CopyButton value={receipt.contractAddress} />
               </div>
             )}
           </DetailRow>
@@ -100,9 +163,6 @@ export default async function TxPage({
               </span>
             </DetailRow>
           )}
-          <DetailRow label="Gas limit">
-            <span className="mono">{tx.gas.toString()}</span>
-          </DetailRow>
           <DetailRow label="Nonce">
             <span className="mono">{tx.nonce}</span>
           </DetailRow>
@@ -124,6 +184,7 @@ export default async function TxPage({
                   <div className="flex items-center gap-2 mb-1">
                     <span className="pill bg-accent/12 text-accent">log #{i}</span>
                     <AddressLink address={log.address} network={network} />
+                    <CopyButton value={log.address} size={14} />
                   </div>
                   {log.topics.map((topic, j) => (
                     <div key={j} className="mono break-all text-text-muted">

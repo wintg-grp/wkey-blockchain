@@ -1,17 +1,16 @@
 "use client";
 
-import { ComingSoonPage } from "@/components/ComingSoon";
-import { useSettings } from "@/lib/settings";
+import { FeaturePreview } from "@/components/FeaturePreview";
 import { networkFromParam } from "@/lib/rpc";
 
 export const dynamic = "force-dynamic";
 
 export default function Page({ searchParams }: { searchParams: { net?: string } }) {
-  const { t } = useSettings();
   return (
-    <ComingSoonPage
+    <FeaturePreview
       network={networkFromParam(searchParams.net)}
-      title={t["services"]["similarContract"]}
+      fr={{"title":"Contrats similaires","description":"Trouvez des contrats au bytecode similaire (clones, forks, copies). Utile pour identifier le code source d'un contrat non vérifié."}}
+      en={{"title":"Similar contracts","description":"Find contracts with similar bytecode (clones, forks, copies). Useful to identify the source of an unverified contract."}}
     />
   );
 }

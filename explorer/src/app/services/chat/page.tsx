@@ -1,17 +1,16 @@
 "use client";
 
-import { ComingSoonPage } from "@/components/ComingSoon";
-import { useSettings } from "@/lib/settings";
+import { FeaturePreview } from "@/components/FeaturePreview";
 import { networkFromParam } from "@/lib/rpc";
 
 export const dynamic = "force-dynamic";
 
 export default function Page({ searchParams }: { searchParams: { net?: string } }) {
-  const { t } = useSettings();
   return (
-    <ComingSoonPage
+    <FeaturePreview
       network={networkFromParam(searchParams.net)}
-      title={t["services"]["chat"]}
+      fr={{"title":"WINTG Chat","description":"Une messagerie ancrée on-chain entre adresses WINTG : utile pour discuter avec un dApp, un contrat ou un autre utilisateur sans quitter l'explorateur.","bullets":["Chiffrement de bout en bout (optionnel)","Notifications push","API publique pour les dApps"]}}
+      en={{"title":"WINTG Chat","description":"On-chain messaging between WINTG addresses: handy to talk to a dApp, a contract or another user without leaving the explorer.","bullets":["Optional end-to-end encryption","Push notifications","Public API for dApps"]}}
     />
   );
 }

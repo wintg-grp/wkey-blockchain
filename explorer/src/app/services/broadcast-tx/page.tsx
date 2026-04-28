@@ -1,17 +1,16 @@
 "use client";
 
-import { ComingSoonPage } from "@/components/ComingSoon";
-import { useSettings } from "@/lib/settings";
+import { FeaturePreview } from "@/components/FeaturePreview";
 import { networkFromParam } from "@/lib/rpc";
 
 export const dynamic = "force-dynamic";
 
 export default function Page({ searchParams }: { searchParams: { net?: string } }) {
-  const { t } = useSettings();
   return (
-    <ComingSoonPage
+    <FeaturePreview
       network={networkFromParam(searchParams.net)}
-      title={t["services"]["broadcastTx"]}
+      fr={{"title":"Diffuser une transaction","description":"Diffusez une transaction signée sur le réseau WINTG. Utile quand votre wallet ne peut pas l'envoyer pour vous."}}
+      en={{"title":"Broadcast transaction","description":"Broadcast a signed transaction to the WINTG network. Useful when your wallet cannot send it for you."}}
     />
   );
 }

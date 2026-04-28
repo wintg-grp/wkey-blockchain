@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getAddress } from "viem";
 import { PageShell } from "@/components/PageShell";
 import { DetailRow } from "@/components/DetailRow";
+import { CopyButton } from "@/components/Copy";
 import { getClient, networkFromParam } from "@/lib/rpc";
 import { formatWtg, isAddress } from "@/lib/format";
 
@@ -56,7 +57,10 @@ export default async function AddressPage({
 
         <section className="card p-6 sm:p-8">
           <DetailRow label="Address">
-            <span className="mono break-all">{checksummed}</span>
+            <span className="inline-flex items-center gap-2 flex-wrap">
+              <span className="mono break-all">{checksummed}</span>
+              <CopyButton value={checksummed} />
+            </span>
           </DetailRow>
           <DetailRow label="Balance">
             <span className="text-text font-bold text-xl">{formatWtg(balance)} WTG</span>
