@@ -1,0 +1,31 @@
+{
+  "network": "wintgTestnet",
+  "chainId": "22800",
+  "deployer": "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+  "timestamp": "2026-04-28T17:29:54.018Z",
+  "contracts": {
+    "NFTFactoryV2": {
+      "address": "0x43B0BAc3950Abd07e12A54e502A65AD45683E010",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x3178D163C443a8CE7B43755b4b99864b0C4F3b9F"
+      ]
+    },
+    "NFTFactory1155": {
+      "address": "0x39406fD51eC89bC313c857CD3Cbc23691ff136E9",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x3178D163C443a8CE7B43755b4b99864b0C4F3b9F"
+      ]
+    },
+    "WINTGMarketplace": {
+      "address": "0x5245b4Cb4Af4240282c6B39f0E95fE26E37554B8",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ]
+    }
+  }
+}
