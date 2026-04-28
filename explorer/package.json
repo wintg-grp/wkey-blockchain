@@ -1,0 +1,45 @@
+{
+  "name": "@wintg/explorer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WINTG Scan — official block explorer for the WINTG L1 chain",
+  "license": "Apache-2.0",
+  "author": "WINTG Group <contact@wintg.group>",
+  "homepage": "https://scan.wintg.network",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wintg-grp/wkey-blockchain.git",
+    "directory": "explorer"
+  },
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.115.0",
+    "@react-three/fiber": "^8.17.10",
+    "next": "14.2.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.171.0",
+    "viem": "^2.21.55"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.171.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.18",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.4.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

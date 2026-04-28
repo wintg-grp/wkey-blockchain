@@ -1,54 +1,118 @@
-# Blockscout — Block Explorer WINTG
+# WINTG Scan
 
-Stack Docker pour exposer un block explorer style Etherscan sur la chaîne WINTG.
+Official block explorer for the WINTG L1 chain.
 
-## Démarrage rapide
+- **Stack** — Next.js 14 (App Router), TypeScript, Tailwind CSS, viem
+- **Visuals** — Three.js / react-three-fiber animated background, dark UI with the WINTG `#FF6A1A` accent
+- **Networks** — mainnet (chain 2280) and testnet (chain 22800), switchable from the header
+- **No database** — pages query the chain RPC directly. Suitable for early-stage traffic; an indexer will be added when transaction history needs deeper queries.
+
+## Run locally
 
 ```bash
 cd explorer
-cp .env.example .env
-
-# Éditer .env :
-#  - DB_PASSWORD     : générer une string forte (`openssl rand -base64 32`)
-#  - SECRET_KEY_BASE : `openssl rand -base64 64`
-#  - WINTG_RPC_URL   : pointer vers ton nœud Besu (port 8545)
-#  - WINTG_WS_URL    : pointer vers le WebSocket (port 8546)
-
-docker compose up -d
-docker compose logs -f blockscout
+cp .env.example .env.local
+npm install
+npm run dev
+# open http://localhost:3001
 ```
 
-L'explorer écoute sur `http://localhost:4000`. Indexation initiale : 30 min – plusieurs heures selon la taille de la chaîne.
+By default the dev server queries the public WINTG endpoints. Override the
+RPC URLs in `.env.local` if you want to point at a local Besu instance.
 
-## Configuration recommandée pour mainnet
-
-- **Reverse proxy Nginx + TLS Let's Encrypt** sur `scan.wintg.network`
-- **PostgreSQL** : 4 GB RAM minimum, SSD NVMe, 100 GB+
-- **Backups** : `pg_dump` quotidien chiffré (voir `scripts/backup-blockscout.sh` à produire)
-
-## Vérification de contrats
-
-Le service `smart-contract-verifier` est exposé sur `:8050`. Le déploiement
-auto-vérifie les contrats si `BLOCKSCOUT_API_URL` est défini dans `.env` racine
-(via `npx hardhat verify`).
-
-## Endpoints utiles
-
-- UI : `http://localhost:4000`
-- API : `http://localhost:4000/api`
-- API Eth-compatible : `http://localhost:4000/api/eth-rpc`
-
-## Logs et debug
+## Build for production
 
 ```bash
-docker compose logs blockscout       # backend Phoenix
-docker compose logs db               # PostgreSQL
-docker compose exec db psql -U blockscout
+npm run build
+npm run start   # serves on port 3001
 ```
 
-## Arrêt et nettoyage
+The Next.js `output: "standalone"` mode keeps the deploy small — only the
+required `node_modules` get bundled.
+
+## Layout
+
+```
+explorer/
+├── public/
+│   └── favicon.svg          (replace with brand SVG when ready)
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx       Root layout, fonts, metadata
+│   │   ├── page.tsx         Homepage (hero + stats + live feed)
+│   │   ├── globals.css      Tailwind base + WINTG tokens
+│   │   ├── not-found.tsx    404 page
+│   │   ├── block/[number]/page.tsx
+│   │   ├── tx/[hash]/page.tsx
+│   │   └── address/[addr]/page.tsx
+│   ├── components/
+│   │   ├── HeroBackground.tsx     Three.js particle field + wireframe
+│   │   ├── Header.tsx             Logo + search + network switcher
+│   │   ├── Footer.tsx             Social links + copyright
+│   │   ├── Logo.tsx
+│   │   ├── NetworkSwitcher.tsx    mainnet ↔ testnet
+│   │   ├── SearchBar.tsx          Universal block/tx/address search
+│   │   ├── StatsGrid.tsx          Latest block, gas, block time
+│   │   ├── LatestBlocks.tsx       Live feed
+│   │   ├── LatestTransactions.tsx Live feed
+│   │   ├── DetailRow.tsx
+│   │   └── AddressLink.tsx
+│   └── lib/
+│       ├── networks.ts      Chain definitions (viem)
+│       ├── rpc.ts           PublicClient cache
+│       └── format.ts        Address shortening, WTG formatting, etc.
+├── tailwind.config.ts
+├── next.config.js
+├── tsconfig.json
+└── package.json
+```
+
+## Brand placeholder
+
+Until the official logo lands, the header renders an "W" tile in the WINTG
+gradient. Drop a `logo.png` (or any image) into `public/` and set
+`NEXT_PUBLIC_LOGO_URL=/logo.png` in `.env.local` to swap it in.
+
+## Deployment
+
+The explorer runs as a single Node process on port `3001` and is fronted by
+the OpenLiteSpeed reverse proxy already configured for `scan.wintg.network`
+(see `scripts/da-templates/openlitespeed_vhost.conf.snippet`).
+
+Recommended `systemd` unit (paste into `/etc/systemd/system/wintg-scan.service`):
+
+```ini
+[Unit]
+Description=WINTG Scan — block explorer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/wkey-blockchain/explorer
+Environment=NODE_ENV=production
+Environment=PORT=3001
+ExecStart=/usr/bin/node /opt/wkey-blockchain/explorer/.next/standalone/server.js
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
 
 ```bash
-docker compose down                  # arrête mais conserve les données
-docker compose down -v               # ⚠️ détruit aussi la DB indexée
+cd /opt/wkey-blockchain/explorer
+npm install --production=false
+npm run build
+cp -r public .next/standalone/public
+cp -r .next/static .next/standalone/.next/static
+systemctl enable --now wintg-scan
 ```
+
+Then `https://scan.wintg.network` will be live, both networks reachable from
+the same URL with the in-app switcher.
+
+## License
+
+Apache-2.0 (same as the parent repository).
