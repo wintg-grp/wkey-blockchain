@@ -1,12 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { PageShell } from "@/components/PageShell";
 import { DetailRow } from "@/components/DetailRow";
-import { AddressLink, HashLink } from "@/components/AddressLink";
+import { AddressLink } from "@/components/AddressLink";
 import { getClient, networkFromParam } from "@/lib/rpc";
-import { formatWtg, gweiFromWei, relativeTime } from "@/lib/format";
-import { isTxHash } from "@/lib/format";
+import { formatWtg, gweiFromWei, isTxHash, relativeTime } from "@/lib/format";
 
 export const revalidate = 0;
 
@@ -34,50 +32,45 @@ export default async function TxPage({
   const fee = receipt ? receipt.gasUsed * receipt.effectiveGasPrice : null;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header network={network} />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-10 w-full">
-        <nav className="text-sm text-ink-300 mb-4">
-          <Link href={`/?net=${network}`} className="hover:text-white">Home</Link>
-          <span className="mx-2 text-ink-500">/</span>
-          <span className="text-white">Transaction</span>
+    <PageShell network={network}>
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-10 w-full">
+        <nav className="text-sm text-text-muted mb-4">
+          <Link href={`/?net=${network}`} className="hover:text-text">Home</Link>
+          <span className="mx-2 text-text-faint">/</span>
+          <span className="text-text">Transaction</span>
         </nav>
 
-        <div className="flex flex-wrap items-baseline gap-3 mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Transaction
-          </h1>
-          {receipt && (
+        <div className="flex flex-wrap items-baseline gap-4 mb-6">
+          <h1 className="display text-5xl sm:text-7xl text-text">Transaction</h1>
+          {receipt ? (
             <span
               className={`pill ${
-                success ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
+                success ? "bg-emerald-500/15 text-emerald-600" : "bg-red-500/15 text-red-500"
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${success ? "bg-emerald-400" : "bg-red-400"}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${success ? "bg-emerald-500" : "bg-red-500"}`} />
               {success ? "Success" : "Reverted"}
             </span>
-          )}
-          {!receipt && (
-            <span className="pill bg-yellow-500/15 text-yellow-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+          ) : (
+            <span className="pill bg-yellow-500/15 text-yellow-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-soft-pulse" />
               Pending
             </span>
           )}
         </div>
 
-        <section className="card p-6">
-          <DetailRow label="Transaction hash" copyable={tx.hash}>
+        <section className="card p-6 sm:p-8">
+          <DetailRow label="Transaction hash">
             <span className="mono break-all">{tx.hash}</span>
           </DetailRow>
           <DetailRow label="Block">
             {tx.blockNumber !== null && (
-              <Link href={`/block/${tx.blockNumber}?net=${network}`} className="link-orange">
+              <Link href={`/block/${tx.blockNumber}?net=${network}`} className="link-accent">
                 #{tx.blockNumber.toString()}
               </Link>
             )}
             {block && (
-              <span className="text-ink-400 ml-2">({relativeTime(block.timestamp)})</span>
+              <span className="text-text-muted ml-2">({relativeTime(block.timestamp)})</span>
             )}
           </DetailRow>
           <DetailRow label="From">
@@ -87,26 +80,22 @@ export default async function TxPage({
             {tx.to ? (
               <AddressLink address={tx.to} network={network} truncate={false} />
             ) : (
-              <span className="text-ink-400 italic">Contract creation</span>
+              <span className="text-text-faint italic">Contract creation</span>
             )}
             {receipt?.contractAddress && (
-              <div className="mt-1 text-xs text-ink-300">
+              <div className="mt-1 text-xs text-text-muted">
                 Created contract:{" "}
-                <AddressLink
-                  address={receipt.contractAddress}
-                  network={network}
-                  truncate={false}
-                />
+                <AddressLink address={receipt.contractAddress} network={network} truncate={false} />
               </div>
             )}
           </DetailRow>
           <DetailRow label="Value">
-            <span className="text-white font-bold">{formatWtg(tx.value)} WTG</span>
+            <span className="text-text font-bold">{formatWtg(tx.value)} WTG</span>
           </DetailRow>
           {fee !== null && (
             <DetailRow label="Transaction fee">
               <span className="mono">{formatWtg(fee)} WTG</span>
-              <span className="text-ink-400 ml-2">
+              <span className="text-text-muted ml-2">
                 ({receipt?.gasUsed.toString()} gas × {gweiFromWei(receipt!.effectiveGasPrice)} gwei)
               </span>
             </DetailRow>
@@ -119,7 +108,7 @@ export default async function TxPage({
           </DetailRow>
           {tx.input && tx.input !== "0x" && (
             <DetailRow label="Input data">
-              <pre className="mono text-xs bg-ink-900 p-3 rounded-lg overflow-x-auto break-all whitespace-pre-wrap">
+              <pre className="mono text-xs bg-surface-2 p-3 rounded-xl overflow-x-auto break-all whitespace-pre-wrap">
                 {tx.input}
               </pre>
             </DetailRow>
@@ -127,25 +116,23 @@ export default async function TxPage({
         </section>
 
         {receipt && receipt.logs.length > 0 && (
-          <section className="card p-6 mt-6">
-            <h2 className="font-bold text-white text-lg mb-3">
-              Logs ({receipt.logs.length})
-            </h2>
+          <section className="card p-6 sm:p-8 mt-6">
+            <h2 className="display text-2xl text-text mb-4">Logs ({receipt.logs.length})</h2>
             <ul className="space-y-3">
               {receipt.logs.map((log, i) => (
-                <li key={i} className="bg-ink-900/60 rounded-lg p-3 text-xs">
+                <li key={i} className="bg-surface-2 rounded-xl p-3 text-xs">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="pill bg-wintg-500/15 text-wintg-500">log #{i}</span>
+                    <span className="pill bg-accent/12 text-accent">log #{i}</span>
                     <AddressLink address={log.address} network={network} />
                   </div>
-                  {log.topics.map((t, j) => (
-                    <div key={j} className="mono break-all text-ink-300">
-                      <span className="text-ink-500">topic[{j}]:</span> {t}
+                  {log.topics.map((topic, j) => (
+                    <div key={j} className="mono break-all text-text-muted">
+                      <span className="text-text-faint">topic[{j}]:</span> {topic}
                     </div>
                   ))}
                   {log.data !== "0x" && (
-                    <div className="mono break-all text-ink-300 mt-1">
-                      <span className="text-ink-500">data:</span> {log.data}
+                    <div className="mono break-all text-text-muted mt-1">
+                      <span className="text-text-faint">data:</span> {log.data}
                     </div>
                   )}
                 </li>
@@ -153,9 +140,7 @@ export default async function TxPage({
             </ul>
           </section>
         )}
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </PageShell>
   );
 }

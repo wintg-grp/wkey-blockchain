@@ -38,6 +38,19 @@ export function relativeTime(timestamp: bigint | number): string {
   return `${d}d ago`;
 }
 
+export function relativeTimeI18n(timestamp: bigint | number, lang: "fr" | "en"): string {
+  const ts = typeof timestamp === "bigint" ? Number(timestamp) : timestamp;
+  const diff = Math.floor(Date.now() / 1000) - ts;
+  if (diff < 5) return lang === "fr" ? "À l'instant" : "just now";
+  if (diff < 60) return `${diff}${lang === "fr" ? " s" : "s"}`;
+  const m = Math.floor(diff / 60);
+  if (m < 60) return `${m}${lang === "fr" ? " min" : "m"}`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}${lang === "fr" ? " h" : "h"}`;
+  const d = Math.floor(h / 24);
+  return `${d}${lang === "fr" ? " j" : "d"}`;
+}
+
 export function isAddress(s: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(s);
 }

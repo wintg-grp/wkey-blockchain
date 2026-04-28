@@ -1,36 +1,23 @@
 import Link from "next/link";
-import { Suspense } from "react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 
 export const dynamic = "force-dynamic";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Suspense fallback={<div className="h-16" />}>
-        <Header network="mainnet" />
-      </Suspense>
-      <main className="flex-1 grid place-items-center px-4 py-20">
-        <div className="text-center max-w-md">
-          <div className="text-6xl font-bold bg-wintg-gradient bg-clip-text text-transparent">
-            404
-          </div>
-          <h1 className="mt-4 text-2xl font-bold text-white">Nothing here</h1>
-          <p className="mt-2 text-ink-300">
-            The block, transaction or address you're looking for doesn't exist on
-            this network. Try the search bar above with a valid hash, address or
-            block number.
-          </p>
-          <Link
-            href="/"
-            className="mt-6 inline-flex px-5 py-2.5 bg-wintg-gradient text-white font-medium rounded-xl shadow-glow"
-          >
-            Back to home
-          </Link>
-        </div>
-      </main>
-      <Footer />
+    <div className="min-h-screen grid place-items-center px-4 py-24 bg-bg text-text">
+      <div className="text-center max-w-lg">
+        <div className="display text-[8rem] sm:text-[12rem] text-accent leading-none">404</div>
+        <h1 className="display text-3xl sm:text-5xl text-text mt-4">Not found</h1>
+        <p className="mt-4 text-text-muted">
+          The block, transaction or address you're looking for doesn't exist on this network.
+        </p>
+        <Link
+          href="/"
+          className="mt-8 inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-accent text-accent-fg font-semibold"
+        >
+          Back to home
+        </Link>
+      </div>
     </div>
   );
 }

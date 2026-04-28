@@ -1,49 +1,49 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 /**
- * HeroBackground — a slow-moving 3D particle network rendered behind the hero.
- *
- * - Two layers of particles (foreground bright orange, background dim purple-ink)
- * - Subtle float animation, mouse-driven camera parallax
- * - Lazy-rendered: parent imports it via `next/dynamic` with ssr:false
+ * Subtle, theme-aware 3D backdrop for the hero. Renders a slowly rotating
+ * orange wireframe + faint particle field. We deliberately keep it small
+ * and low-contrast so it never competes with the big headline typography.
  */
 
-function ParticleField({
-  count,
-  color,
-  size,
-  spread,
-  speed,
-}: {
-  count: number;
-  color: string;
-  size: number;
-  spread: number;
-  speed: number;
-}) {
-  const ref = useRef<THREE.Points>(null);
-
-  const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      arr[i * 3]     = (Math.random() - 0.5) * spread;
-      arr[i * 3 + 1] = (Math.random() - 0.5) * spread;
-      arr[i * 3 + 2] = (Math.random() - 0.5) * spread;
-    }
-    return arr;
-  }, [count, spread]);
-
+function NetworkMesh({ tone }: { tone: number }) {
+  const ref = useRef<THREE.LineSegments>(null);
+  const geometry = useMemo(() => {
+    const ico = new THREE.IcosahedronGeometry(2.4, 1);
+    return new THREE.EdgesGeometry(ico);
+  }, []);
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.getElapsedTime();
-    ref.current.rotation.x = Math.sin(t * speed * 0.1) * 0.05;
-    ref.current.rotation.y = t * speed * 0.03;
+    ref.current.rotation.x = t * 0.05;
+    ref.current.rotation.y = t * 0.09;
   });
+  return (
+    <lineSegments ref={ref} geometry={geometry}>
+      <lineBasicMaterial color="#FF6A1A" transparent opacity={tone} />
+    </lineSegments>
+  );
+}
 
+function Particles({ count, color, opacity }: { count: number; color: string; opacity: number }) {
+  const ref = useRef<THREE.Points>(null);
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3]     = (Math.random() - 0.5) * 12;
+      arr[i * 3 + 1] = (Math.random() - 0.5) * 12;
+      arr[i * 3 + 2] = (Math.random() - 0.5) * 12;
+    }
+    return arr;
+  }, [count]);
+  useFrame((state) => {
+    if (!ref.current) return;
+    ref.current.rotation.y = state.clock.getElapsedTime() * 0.04;
+  });
   return (
     <points ref={ref}>
       <bufferGeometry>
@@ -56,11 +56,11 @@ function ParticleField({
         />
       </bufferGeometry>
       <pointsMaterial
-        size={size}
+        size={0.04}
         color={color}
         sizeAttenuation
         transparent
-        opacity={0.85}
+        opacity={opacity}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
       />
@@ -68,83 +68,38 @@ function ParticleField({
   );
 }
 
-function NetworkMesh() {
-  const ref = useRef<THREE.LineSegments>(null);
+export default function HeroBackground() {
+  const [isDark, setIsDark] = useState(false);
 
-  // Build a low-poly icosahedron wireframe and recolor its edges with WINTG orange.
-  const geometry = useMemo(() => {
-    const ico = new THREE.IcosahedronGeometry(2.6, 1);
-    const edges = new THREE.EdgesGeometry(ico);
-    return edges;
+  useEffect(() => {
+    const update = () => {
+      setIsDark(document.documentElement.dataset.theme === "dark");
+    };
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
   }, []);
 
-  useFrame((state) => {
-    if (!ref.current) return;
-    const t = state.clock.getElapsedTime();
-    ref.current.rotation.x = t * 0.07;
-    ref.current.rotation.y = t * 0.12;
-  });
+  // Brand orange feels great on either theme; we just dial intensity for light.
+  const tone = isDark ? 0.55 : 0.35;
+  const particleColor = isDark ? "#FF6A1A" : "#FF7E2D";
+  const particleOpacity = isDark ? 0.85 : 0.4;
 
   return (
-    <lineSegments ref={ref} geometry={geometry}>
-      <lineBasicMaterial color="#FF6A1A" transparent opacity={0.55} />
-    </lineSegments>
-  );
-}
-
-function GlowCore() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    if (!ref.current) return;
-    const t = state.clock.getElapsedTime();
-    const s = 1 + Math.sin(t * 1.5) * 0.04;
-    ref.current.scale.set(s, s, s);
-  });
-  return (
-    <mesh ref={ref}>
-      <sphereGeometry args={[0.55, 32, 32]} />
-      <meshBasicMaterial color="#FF6A1A" transparent opacity={0.18} />
-    </mesh>
-  );
-}
-
-export default function HeroBackground() {
-  return (
-    <div
-      className="pointer-events-none absolute inset-0 -z-10"
-      aria-hidden="true"
-    >
+    <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
       <Canvas
         dpr={[1, 1.5]}
         camera={{ position: [0, 0, 6], fov: 60 }}
         gl={{ antialias: true, alpha: true }}
       >
-        <ambientLight intensity={0.4} />
-        <pointLight position={[5, 5, 5]} color="#FF6A1A" intensity={1.5} />
-
-        <NetworkMesh />
-        <GlowCore />
-
-        {/* Bright foreground particles */}
-        <ParticleField
-          count={350}
-          color="#FF6A1A"
-          size={0.045}
-          spread={9}
-          speed={1}
-        />
-        {/* Dim background particles */}
-        <ParticleField
-          count={1200}
-          color="#7C8095"
-          size={0.025}
-          spread={18}
-          speed={0.4}
-        />
+        <ambientLight intensity={0.5} />
+        <NetworkMesh tone={tone} />
+        <Particles count={300} color={particleColor} opacity={particleOpacity} />
       </Canvas>
 
-      {/* Vertical fade so the scene doesn't compete with content */}
-      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-b from-transparent via-ink-950/60 to-ink-950" />
+      {/* Soften the bottom so content takes priority */}
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-b from-transparent to-bg" />
     </div>
   );
 }

@@ -20,7 +20,7 @@ export function NetworkSwitcher({ current }: { current: NetworkKey }) {
     <div
       role="tablist"
       aria-label="Network selector"
-      className="inline-flex p-1 bg-ink-850 border border-ink-700 rounded-xl text-xs font-semibold"
+      className="inline-flex p-1 bg-surface border border-border rounded-xl text-xs font-semibold"
     >
       {(["mainnet", "testnet"] as const).map((n) => {
         const active = current === n;
@@ -33,14 +33,14 @@ export function NetworkSwitcher({ current }: { current: NetworkKey }) {
             onClick={() => switchTo(n)}
             className={`px-3 py-1.5 rounded-lg capitalize transition-all focus-ring ${
               active
-                ? "bg-wintg-gradient text-white shadow-glow"
-                : "text-ink-300 hover:text-white"
+                ? "bg-accent text-accent-fg shadow-flat"
+                : "text-text-muted hover:text-text"
             }`}
           >
             <span className="inline-flex items-center gap-1.5">
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  active ? "bg-white animate-pulse" : "bg-ink-500"
+                  active ? "bg-accent-fg animate-soft-pulse" : "bg-text-faint"
                 }`}
               />
               {n}

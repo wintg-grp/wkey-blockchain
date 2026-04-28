@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { PageShell } from "@/components/PageShell";
 import { DetailRow } from "@/components/DetailRow";
 import { AddressLink, HashLink } from "@/components/AddressLink";
 import { getClient, networkFromParam } from "@/lib/rpc";
@@ -26,10 +25,7 @@ export default async function BlockPage({
 
   let block;
   try {
-    block = await client.getBlock({
-      blockNumber: num,
-      includeTransactions: true,
-    });
+    block = await client.getBlock({ blockNumber: num, includeTransactions: true });
   } catch {
     notFound();
   }
@@ -42,66 +38,62 @@ export default async function BlockPage({
   const totalWtg = blockTxs.reduce((acc, t) => acc + t.value, 0n);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header network={network} />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-10 w-full">
-        <nav className="text-sm text-ink-300 mb-4">
-          <Link href={`/?net=${network}`} className="hover:text-white">Home</Link>
-          <span className="mx-2 text-ink-500">/</span>
-          <span className="text-white">Block {block.number?.toString()}</span>
+    <PageShell network={network}>
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-10 w-full">
+        <nav className="text-sm text-text-muted mb-4">
+          <Link href={`/?net=${network}`} className="hover:text-text">Home</Link>
+          <span className="mx-2 text-text-faint">/</span>
+          <span className="text-text">Block {block.number?.toString()}</span>
         </nav>
 
-        <div className="flex flex-wrap items-baseline gap-3 mb-6">
-          <h1 className="text-3xl font-bold text-white tracking-tight">
-            Block <span className="text-wintg-500">#{block.number?.toString()}</span>
+        <div className="flex flex-wrap items-baseline gap-4 mb-6">
+          <h1 className="display text-5xl sm:text-7xl text-text">
+            Block <span className="text-accent">#{block.number?.toString()}</span>
           </h1>
-          <span className="text-sm text-ink-300">{relativeTime(block.timestamp)}</span>
+          <span className="text-sm text-text-muted">{relativeTime(block.timestamp)}</span>
           <span className="ml-auto flex items-center gap-2">
             <Link
               href={`/block/${(block.number ?? 0n) - 1n}?net=${network}`}
-              className="px-3 py-1.5 text-sm rounded-lg bg-ink-800 hover:bg-ink-700 transition-colors"
+              className="btn-ghost text-sm"
             >
               ← Prev
             </Link>
             <Link
               href={`/block/${(block.number ?? 0n) + 1n}?net=${network}`}
-              className="px-3 py-1.5 text-sm rounded-lg bg-ink-800 hover:bg-ink-700 transition-colors"
+              className="btn-ghost text-sm"
             >
               Next →
             </Link>
           </span>
         </div>
 
-        <section className="card p-6">
-          <DetailRow label="Block height" copyable={block.number?.toString()}>
-            <span className="font-bold text-white">{block.number?.toString()}</span>
+        <section className="card p-6 sm:p-8">
+          <DetailRow label="Block height">
+            <span className="font-bold text-text">{block.number?.toString()}</span>
           </DetailRow>
-          <DetailRow label="Hash" copyable={block.hash ?? ""}>
+          <DetailRow label="Hash">
             <span className="mono break-all">{block.hash}</span>
           </DetailRow>
           <DetailRow label="Parent hash">
             <HashLink hash={block.parentHash} network={network} type="block" truncate={false} />
           </DetailRow>
-          <DetailRow label="Validator (miner)">
+          <DetailRow label="Validator">
             <AddressLink address={block.miner} network={network} truncate={false} />
           </DetailRow>
           <DetailRow label="Timestamp">
             <span>
               {new Date(Number(block.timestamp) * 1000).toUTCString()}
-              <span className="text-ink-400 ml-2">({relativeTime(block.timestamp)})</span>
+              <span className="text-text-muted ml-2">({relativeTime(block.timestamp)})</span>
             </span>
           </DetailRow>
           <DetailRow label="Transactions">
-            <span className="font-bold text-white">{block.transactions.length}</span>
-            <span className="text-ink-300 ml-2">
-              · {formatWtg(totalWtg)} WTG transferred
-            </span>
+            <span className="font-bold text-text">{block.transactions.length}</span>
+            <span className="text-text-muted ml-2">· {formatWtg(totalWtg)} WTG</span>
           </DetailRow>
           <DetailRow label="Gas used">
             <span className="mono">{block.gasUsed.toString()}</span>
-            <span className="text-ink-400 ml-2">/ {block.gasLimit.toString()}</span>
-            <span className="ml-2 text-ink-300">
+            <span className="text-text-muted ml-2">/ {block.gasLimit.toString()}</span>
+            <span className="ml-2 text-text-muted">
               ({((Number(block.gasUsed) / Number(block.gasLimit)) * 100).toFixed(2)}%)
             </span>
           </DetailRow>
@@ -115,27 +107,25 @@ export default async function BlockPage({
           </DetailRow>
         </section>
 
-        {block.transactions.length > 0 && (
-          <section className="card p-6 mt-6">
-            <h2 className="font-bold text-white text-lg mb-3">
-              Transactions in this block
-            </h2>
-            <ul className="divide-y divide-ink-800/60">
+        {blockTxs.length > 0 && (
+          <section className="card p-6 sm:p-8 mt-6">
+            <h2 className="display text-2xl text-text mb-4">Transactions in this block</h2>
+            <ul className="divide-y divide-border">
               {blockTxs.map((t) => (
                 <li key={t.hash} className="py-3">
                   <div className="flex items-center gap-2 mb-1">
                     <HashLink hash={t.hash} network={network} type="tx" />
-                    <span className="ml-auto text-sm text-white font-medium">
+                    <span className="ml-auto text-sm text-text font-semibold">
                       {formatWtg(t.value)} WTG
                     </span>
                   </div>
-                  <div className="text-xs text-ink-300 flex flex-wrap items-center gap-x-3">
+                  <div className="text-xs text-text-muted flex flex-wrap items-center gap-x-3">
                     <AddressLink address={t.from} network={network} />
-                    <span className="text-ink-500">→</span>
+                    <span className="text-text-faint">→</span>
                     {t.to ? (
                       <AddressLink address={t.to} network={network} />
                     ) : (
-                      <span className="text-ink-400 italic">contract creation</span>
+                      <span className="text-text-faint italic">contract creation</span>
                     )}
                   </div>
                 </li>
@@ -143,9 +133,7 @@ export default async function BlockPage({
             </ul>
           </section>
         )}
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </PageShell>
   );
 }

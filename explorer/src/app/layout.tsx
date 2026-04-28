@@ -1,20 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { SettingsProvider } from "@/lib/settings";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://scan.wintg.network"),
   title: {
-    default: "WINTG Scan — official block explorer",
+    default: "WINTG Scan — explorer officiel WINTG",
     template: "%s · WINTG Scan",
   },
   description:
-    "Browse blocks, transactions, validators and contracts on the WINTG L1 chain. Mainnet (2280) and testnet (22800).",
+    "Explorez les blocs, transactions, tokens et adresses sur la chaîne WINTG. Mainnet 2280 · Testnet 22800.",
   applicationName: "WINTG Scan",
   authors: [{ name: "WINTG Group" }],
-  keywords: ["WINTG", "WTG", "blockchain", "explorer", "africa", "uemoa", "evm", "besu"],
+  keywords: ["WINTG", "WTG", "blockchain", "explorer", "africa", "uemoa", "evm"],
   openGraph: {
     title: "WINTG Scan",
-    description: "Official WINTG block explorer.",
+    description: "Explorateur officiel WINTG.",
     url: "https://scan.wintg.network",
     siteName: "WINTG Scan",
     type: "website",
@@ -22,11 +23,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "WINTG Scan",
-    description: "Official WINTG block explorer.",
+    description: "Explorateur officiel WINTG.",
   },
-  icons: {
-    icon: "/favicon.ico",
-  },
+  icons: { icon: "/favicon.svg" },
 };
 
 export const viewport: Viewport = {
@@ -35,10 +34,30 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+// Block the FOUC by reading the saved theme before React hydrates.
+const themeInitScript = `
+(function () {
+  try {
+    var t = localStorage.getItem('wintg.scan.theme');
+    var resolved = t === 'light' || t === 'dark'
+      ? t
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.dataset.theme = resolved;
+  } catch (e) {
+    document.documentElement.dataset.theme = 'light';
+  }
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="fr" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body>
+        <SettingsProvider>{children}</SettingsProvider>
+      </body>
     </html>
   );
 }

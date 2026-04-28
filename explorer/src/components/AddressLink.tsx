@@ -14,7 +14,7 @@ export function AddressLink({
   return (
     <Link
       href={`/address/${address}?net=${network}`}
-      className="link-orange mono"
+      className="link-accent mono"
       title={address}
     >
       {truncate ? shortenAddress(address) : address}
@@ -35,7 +35,7 @@ export function HashLink({
 }) {
   const href = type === "tx" ? `/tx/${hash}?net=${network}` : `/block/${hash}?net=${network}`;
   return (
-    <Link href={href} className="link-orange mono" title={hash}>
+    <Link href={href} className="link-accent mono" title={hash}>
       {truncate ? shortenAddress(hash, 10, 8) : hash}
     </Link>
   );

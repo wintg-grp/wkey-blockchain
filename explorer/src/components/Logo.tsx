@@ -8,7 +8,7 @@ export function Logo({ size = 36 }: { size?: number }) {
     <Link
       href="/"
       className="inline-flex items-center gap-2.5 group focus-ring rounded-lg"
-      aria-label="WINTG Scan home"
+      aria-label="WINTG Scan"
     >
       {LOGO ? (
         <Image
@@ -20,18 +20,17 @@ export function Logo({ size = 36 }: { size?: number }) {
           className="rounded-md"
         />
       ) : (
-        // Placeholder mark until the brand logo is uploaded
         <span
-          className="grid place-items-center font-bold text-white bg-wintg-gradient rounded-md shadow-glow"
-          style={{ width: size, height: size, fontSize: size * 0.45 }}
+          className="grid place-items-center font-display text-accent-fg bg-wintg-gradient rounded-md shadow-flat"
+          style={{ width: size, height: size, fontSize: size * 0.55 }}
         >
           W
         </span>
       )}
       <span className="hidden sm:flex flex-col leading-tight">
-        <span className="font-bold text-white tracking-tight">WINTG Scan</span>
-        <span className="text-[10px] uppercase tracking-[0.18em] text-ink-300">
-          Block explorer
+        <span className="font-display text-text uppercase tracking-tight-display text-lg">WINTG</span>
+        <span className="text-[10px] uppercase tracking-[0.18em] text-text-muted -mt-0.5">
+          Scan
         </span>
       </span>
     </Link>
