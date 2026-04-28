@@ -4,45 +4,14 @@ import { PageShell } from "@/components/PageShell";
 import { DetailRow } from "@/components/DetailRow";
 import { AddressLink } from "@/components/AddressLink";
 import { CopyButton } from "@/components/Copy";
+import { StatTile } from "@/components/StatTile";
+import { StatCluster } from "@/components/StatCluster";
 import { getClient, networkFromParam } from "@/lib/rpc";
 import { formatWtg, gweiFromWei, isTxHash, relativeTime } from "@/lib/format";
 
 export const revalidate = 0;
 
-function MiniStat({
-  label,
-  value,
-  hint,
-  variant = "default",
-}: {
-  label: string;
-  value: React.ReactNode;
-  hint?: string;
-  variant?: "default" | "accent" | "inverse";
-}) {
-  const klass =
-    variant === "inverse"
-      ? "card-inverse p-5"
-      : variant === "accent"
-        ? "p-5 rounded-3xl bg-wintg-gradient text-accent-fg"
-        : "card p-5";
-  return (
-    <div className={klass}>
-      <div className={`text-[10px] uppercase tracking-[0.18em] font-bold ${variant === "default" ? "text-text-muted" : "opacity-80"}`}>
-        {label}
-      </div>
-      <div className="mt-1.5 font-display text-2xl sm:text-3xl leading-none tracking-tight-display">
-        {value}
-      </div>
-      {hint && (
-        <div className={`mt-1 text-xs ${variant === "default" ? "text-text-muted" : "opacity-70"}`}>
-          {hint}
-        </div>
-      )}
-    </div>
-  );
-}
-
+const MiniStat = StatTile;
 export default async function TxPage({
   params,
   searchParams,
@@ -51,13 +20,17 @@ export default async function TxPage({
   searchParams: { net?: string };
 }) {
   const network = networkFromParam(searchParams.net);
-  if (!isTxHash(params.hash)) notFound();
+  const hashCleaned = decodeURIComponent(params.hash).trim();
+  if (!isTxHash(hashCleaned)) notFound();
 
   const client = getClient(network);
-  const hash = params.hash as `0x${string}`;
+  const hash = hashCleaned as `0x${string}`;
 
   const [tx, receipt] = await Promise.all([
-    client.getTransaction({ hash }).catch(() => null),
+    client.getTransaction({ hash }).catch((e) => {
+      console.error(`[tx/${hashCleaned}] getTransaction failed:`, e);
+      return null;
+    }),
     client.getTransactionReceipt({ hash }).catch(() => null),
   ]);
   if (!tx) notFound();
@@ -96,7 +69,7 @@ export default async function TxPage({
           )}
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <StatCluster>
           <MiniStat variant="accent" label="Value" value={formatWtg(tx.value)} hint="WTG" />
           <MiniStat label="Fee" value={fee ? formatWtg(fee) : "—"} hint="WTG" />
           <MiniStat
@@ -110,7 +83,7 @@ export default async function TxPage({
             value={tx.blockNumber !== null ? `#${tx.blockNumber}` : "pending"}
             hint={block ? relativeTime(block.timestamp) : ""}
           />
-        </div>
+        </StatCluster>
 
         <section className="card p-6 sm:p-8">
           <DetailRow label="Transaction hash">

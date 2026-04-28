@@ -33,30 +33,79 @@ const SOCIAL_LINKS = [
   { key: "github",   envVar: "NEXT_PUBLIC_GITHUB_URL",   label: "GitHub" },
 ] as const;
 
+interface EcosystemLink {
+  label: string;
+  href: string;
+  hint: { fr: string; en: string };
+}
+
+const ECOSYSTEM_LINKS: EcosystemLink[] = [
+  { label: "wintg.network",    href: "https://wintg.network",      hint: { fr: "Site officiel WINTG",       en: "WINTG main site" } },
+  { label: "wkey.app",         href: "https://wkey.app",           hint: { fr: "Wallet WINTG · créer tokens et NFTs", en: "WINTG wallet · create tokens & NFTs" } },
+  { label: "dex.wintg.network",href: "https://dex.wintg.network",  hint: { fr: "DEX officiel",              en: "Official DEX" } },
+  { label: "app.wintg.network",href: "https://app.wintg.network",  hint: { fr: "Toutes les apps WINTG",     en: "All WINTG apps" } },
+  { label: "l2chain.wintg.network", href: "https://l2chain.wintg.network", hint: { fr: "Créer votre L2 sur WINTG", en: "Build your L2 on WINTG" } },
+  { label: "doc.wintg.network",href: "https://doc.wintg.network",  hint: { fr: "Documentation",             en: "Documentation" } },
+];
+
 export function Footer() {
-  const { t } = useSettings();
+  const { t, lang } = useSettings();
+  const fr = lang === "fr";
   const socials = SOCIAL_LINKS
     .map((s) => ({ ...s, href: process.env[s.envVar] }))
     .filter((s) => !!s.href);
-  const docUrl = process.env.NEXT_PUBLIC_DOC_URL ?? "https://doc.wintg.network";
 
   return (
     <footer className="mt-24">
-      {/* Big black band like the inspo */}
+      {/* Ecosystem strip */}
+      <section className="border-y border-border bg-surface/40">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-10">
+          <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-text-muted mb-5">
+            {fr ? "Écosystème WINTG" : "WINTG ecosystem"}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {ECOSYSTEM_LINKS.map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card card-hover p-4 flex items-center gap-3 group"
+              >
+                <span className="grid place-items-center w-10 h-10 rounded-xl bg-surface-2 text-accent">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
+                    <path d="M14 5h7v7M21 5L10 16M11 5H5a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-mono text-sm text-text truncate group-hover:text-accent transition-colors">
+                    {l.label}
+                  </div>
+                  <div className="text-xs text-text-muted truncate">
+                    {fr ? l.hint.fr : l.hint.en}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Big black band */}
       <div className="bg-inverse text-inverse-fg">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-16 grid gap-10 md:grid-cols-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-14 sm:py-16 grid gap-10 md:grid-cols-12">
           <div className="md:col-span-5">
-            <div className="font-display text-5xl sm:text-6xl uppercase leading-[0.95] tracking-tight-display">
+            <div className="font-display text-4xl sm:text-5xl md:text-6xl uppercase leading-[0.95] tracking-tight-display">
               {t.home.heroTitle1}{" "}
               <span className="text-accent">{t.home.heroTitleAccent}</span>{" "}
               {t.home.heroTitle2}
             </div>
-            <p className="mt-6 text-sm text-inverse-fg/70 max-w-md leading-relaxed">
+            <p className="mt-5 text-sm text-inverse-fg/70 max-w-md leading-relaxed">
               {t.footer.tagline}
             </p>
 
             {socials.length > 0 && (
-              <div className="mt-6 flex items-center gap-2.5">
+              <div className="mt-5 flex items-center gap-2.5">
                 {socials.map((s) => (
                   <a
                     key={s.key}
@@ -90,7 +139,7 @@ export function Footer() {
               {t.footer.resources}
             </h3>
             <ul className="space-y-2.5 text-sm text-inverse-fg/85">
-              <li><a href={docUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent">{t.company.apiDocs}</a></li>
+              <li><a href="https://doc.wintg.network" target="_blank" rel="noopener noreferrer" className="hover:text-accent">{t.company.apiDocs}</a></li>
               <li><Link href="/api-plans" className="hover:text-accent">{t.company.apiPlans}</Link></li>
               <li><Link href="/charts" className="hover:text-accent">{t.services.chartsStats}</Link></li>
               <li><Link href="/knowledge-base" className="hover:text-accent">{t.company.knowledgeBase}</Link></li>

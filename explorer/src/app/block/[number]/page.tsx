@@ -4,33 +4,15 @@ import { PageShell } from "@/components/PageShell";
 import { DetailRow } from "@/components/DetailRow";
 import { AddressLink, HashLink } from "@/components/AddressLink";
 import { CopyButton } from "@/components/Copy";
+import { StatTile } from "@/components/StatTile";
+import { StatCluster } from "@/components/StatCluster";
 import { getClient, networkFromParam } from "@/lib/rpc";
 import { formatWtg, gweiFromWei, relativeTime } from "@/lib/format";
 import { isExplorerTxObject, type ExplorerTx } from "@/lib/tx";
 
 export const revalidate = 0;
 
-function MiniStat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: React.ReactNode;
-  hint?: string;
-}) {
-  return (
-    <div className="card p-4 sm:p-5">
-      <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-text-muted">
-        {label}
-      </div>
-      <div className="mt-1.5 font-display text-text text-2xl sm:text-3xl leading-none tracking-tight-display">
-        {value}
-      </div>
-      {hint && <div className="mt-1 text-xs text-text-muted">{hint}</div>}
-    </div>
-  );
-}
+const MiniStat = StatTile;
 
 export default async function BlockPage({
   params,
@@ -42,14 +24,22 @@ export default async function BlockPage({
   const network = networkFromParam(searchParams.net);
   const client = getClient(network);
 
-  const num = params.number.startsWith("0x")
-    ? BigInt(params.number)
-    : BigInt(parseInt(params.number, 10));
+  // Accept "1234", "0x4d2", " 1234 ". Anything else → 404.
+  const cleaned = params.number.trim();
+  let num: bigint;
+  try {
+    num = cleaned.startsWith("0x") || cleaned.startsWith("0X")
+      ? BigInt(cleaned)
+      : BigInt(cleaned);
+  } catch {
+    notFound();
+  }
 
   let block;
   try {
-    block = await client.getBlock({ blockNumber: num, includeTransactions: true });
-  } catch {
+    block = await client.getBlock({ blockNumber: num!, includeTransactions: true });
+  } catch (e) {
+    console.error(`[block/${cleaned}] fetch failed:`, e);
     notFound();
   }
   if (!block) notFound();
@@ -94,7 +84,7 @@ export default async function BlockPage({
         </div>
 
         {/* Stat boxes at the top */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <StatCluster>
           <MiniStat
             label="Transactions"
             value={blockTxs.length}
@@ -115,7 +105,7 @@ export default async function BlockPage({
             value={block.miner.slice(0, 6) + "…" + block.miner.slice(-4)}
             hint="block proposer"
           />
-        </div>
+        </StatCluster>
 
         <section className="card p-6 sm:p-8">
           <DetailRow label="Block height">

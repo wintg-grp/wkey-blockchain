@@ -2,45 +2,15 @@ import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { HashLink } from "@/components/AddressLink";
 import { CopyButton } from "@/components/Copy";
+import { StatTile } from "@/components/StatTile";
+import { StatCluster } from "@/components/StatCluster";
 import { getClient, networkFromParam } from "@/lib/rpc";
 import { relativeTime } from "@/lib/format";
 
 export const revalidate = 0;
 const PER_PAGE = 50;
 
-function MiniStat({
-  label,
-  value,
-  hint,
-  variant = "default",
-}: {
-  label: string;
-  value: React.ReactNode;
-  hint?: string;
-  variant?: "default" | "accent" | "inverse";
-}) {
-  const klass =
-    variant === "inverse"
-      ? "card-inverse p-5"
-      : variant === "accent"
-        ? "p-5 rounded-3xl bg-wintg-gradient text-accent-fg"
-        : "card p-5";
-  return (
-    <div className={klass}>
-      <div className={`text-[10px] uppercase tracking-[0.18em] font-bold ${variant === "default" ? "text-text-muted" : "opacity-80"}`}>
-        {label}
-      </div>
-      <div className="mt-1.5 font-display text-3xl sm:text-4xl leading-none tracking-tight-display">
-        {value}
-      </div>
-      {hint && (
-        <div className={`mt-1 text-xs ${variant === "default" ? "text-text-muted" : "opacity-70"}`}>
-          {hint}
-        </div>
-      )}
-    </div>
-  );
-}
+const MiniStat = StatTile;
 
 export default async function BlocksPage({
   searchParams,
@@ -82,11 +52,13 @@ export default async function BlocksPage({
           Live block production on {network} · {head.toString()} blocks total.
         </p>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-8">
-          <MiniStat variant="accent" label="Latest height" value={`#${head.toString()}`} hint={network === "mainnet" ? "Chain 2280" : "Chain 22800"} />
-          <MiniStat label="Tx in this page" value={totalTx} hint={`across ${validBlocks.length} blocks`} />
-          <MiniStat label="Avg gas used" value={avgGas.toLocaleString("fr-FR")} hint="per block" />
-          <MiniStat variant="inverse" label="Active validators" value={validators.size} hint="seen in this page" />
+        <div className="mt-8">
+          <StatCluster>
+            <MiniStat variant="accent" label="Latest height" value={`#${head.toString()}`} hint={network === "mainnet" ? "Chain 2280" : "Chain 22800"} />
+            <MiniStat label="Tx in this page" value={totalTx} hint={`across ${validBlocks.length} blocks`} />
+            <MiniStat label="Avg gas used" value={avgGas.toLocaleString("fr-FR")} hint="per block" />
+            <MiniStat variant="inverse" label="Active validators" value={validators.size} hint="seen in this page" />
+          </StatCluster>
         </div>
 
         <section className="card mt-8 overflow-hidden">

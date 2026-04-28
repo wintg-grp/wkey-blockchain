@@ -49,14 +49,14 @@ export async function LatestTransactions({
   }
 
   return (
-    <section className="card p-5 sm:p-6">
-      <header className="flex items-center justify-between mb-4">
-        <h2 className="font-display uppercase text-2xl sm:text-3xl tracking-tight-display text-text">
+    <section className="card p-4 sm:p-6">
+      <header className="flex items-center justify-between mb-3 sm:mb-4">
+        <h2 className="font-display uppercase text-xl sm:text-3xl tracking-tight-display text-text">
           {t.home.txsTitle}
         </h2>
         <Link
           href={`/txs?net=${network}`}
-          className="text-xs font-semibold text-accent hover:opacity-80"
+          className="text-[11px] sm:text-xs font-semibold text-accent hover:opacity-80"
         >
           {t.common.viewAll} →
         </Link>
@@ -69,13 +69,13 @@ export async function LatestTransactions({
       ) : (
         <ul className="divide-y divide-border">
           {txs.map((row) => (
-            <li key={row.hash} className="py-3">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="pill bg-accent/12 text-accent">tx</span>
+            <li key={row.hash} className="py-2.5 sm:py-3">
+              <div className="flex items-center gap-2 text-[13px] sm:text-sm">
+                <span className="pill bg-accent/12 text-accent text-[10px] sm:text-xs">tx</span>
                 <HashLink hash={row.hash} network={network} type="tx" />
-                <span className="ml-auto text-xs text-text-muted">{relativeTimeI18n(row.timestamp, lang)}</span>
+                <span className="ml-auto text-[11px] sm:text-xs text-text-muted whitespace-nowrap">{relativeTimeI18n(row.timestamp, lang)}</span>
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 text-[11px] sm:text-xs text-text-muted">
                 <AddressLink address={row.from} network={network} />
                 <span className="text-text-faint">→</span>
                 {row.to ? (
@@ -83,7 +83,7 @@ export async function LatestTransactions({
                 ) : (
                   <span className="text-text-faint italic">contract</span>
                 )}
-                <span className="ml-auto text-text font-semibold">
+                <span className="ml-auto text-text font-semibold whitespace-nowrap">
                   {formatWtg(row.value)} WTG
                 </span>
               </div>

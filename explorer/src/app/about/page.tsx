@@ -1,7 +1,7 @@
 "use client";
 
 import { PageShell } from "@/components/PageShell";
-import { AboutHero } from "@/components/AboutHero";
+import { AboutCards } from "@/components/AboutCards";
 import { useSettings } from "@/lib/settings";
 import { networkFromParam } from "@/lib/rpc";
 
@@ -65,7 +65,7 @@ export default function AboutPage({ searchParams }: { searchParams: { net?: stri
   return (
     <PageShell network={network}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-start">
           <div>
             <h1 className="display text-5xl sm:text-7xl text-text">{title}</h1>
             <p className="mt-6 text-text-muted text-lg leading-relaxed">{c.intro}</p>
@@ -87,7 +87,7 @@ export default function AboutPage({ searchParams }: { searchParams: { net?: stri
           </div>
 
           <div>
-            <AboutHero />
+            <AboutCards />
           </div>
         </div>
 

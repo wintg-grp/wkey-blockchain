@@ -2,6 +2,7 @@ import { getClient } from "@/lib/rpc";
 import type { NetworkKey } from "@/lib/networks";
 import { StatTile } from "./StatTile";
 import { PriceTile } from "./PriceTile";
+import { StatCluster } from "./StatCluster";
 import { DICTS, type Lang } from "@/lib/i18n/dict";
 
 async function loadStats(net: NetworkKey) {
@@ -40,7 +41,7 @@ export async function StatsRow({ network, lang }: { network: NetworkKey; lang: L
   const gwei = Number(stats.gasPrice) / 1e9;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+    <StatCluster>
       <PriceTile />
       <StatTile
         label={t.home.statBlock}
@@ -59,6 +60,6 @@ export async function StatsRow({ network, lang }: { network: NetworkKey; lang: L
         value={`${gwei.toFixed(2)}`}
         hint="gwei · current minimum"
       />
-    </div>
+    </StatCluster>
   );
 }

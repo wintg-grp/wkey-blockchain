@@ -106,6 +106,8 @@ export function Header({ network }: { network: NetworkKey }) {
             <NetworkSwitcher current={network} />
             <SettingsMenu />
 
+            <ConnectWalletButton />
+
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
@@ -120,15 +122,19 @@ export function Header({ network }: { network: NetworkKey }) {
         </div>
       </header>
 
-      {/* Mobile drawer */}
+      {/* Mobile bottom-sheet menu */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50">
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end" role="dialog" aria-modal="true">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/55 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative ml-auto h-full w-[88%] max-w-sm bg-bg border-l border-border overflow-y-auto p-6 animate-fade-in-up">
-            <div className="flex items-center justify-between mb-6">
+          <div className="relative w-full max-h-[85vh] bg-bg rounded-t-3xl border-t border-border overflow-y-auto animate-fade-in-up">
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-text-faint rounded-full" />
+            </div>
+
+            <div className="flex items-center justify-between px-5 pb-3">
               <Logo />
               <button onClick={() => setMobileOpen(false)} className="p-2 rounded-xl hover:bg-surface-2" aria-label="Close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
@@ -136,17 +142,47 @@ export function Header({ network }: { network: NetworkKey }) {
                 </svg>
               </button>
             </div>
-            <MobileLink href="/blocks"  onClick={() => setMobileOpen(false)}>{t.nav.blocks}</MobileLink>
-            <MobileLink href="/txs"     onClick={() => setMobileOpen(false)}>{t.nav.txs}</MobileLink>
-            <MobileLink href="/tokens"  onClick={() => setMobileOpen(false)}>{t.nav.tokens}</MobileLink>
-            <MobileLink href="/nfts"    onClick={() => setMobileOpen(false)}>{t.nav.nfts}</MobileLink>
-            <MobileSection title={t.nav.tools}    items={tools}            onClose={() => setMobileOpen(false)} />
-            <MobileSection title={t.nav.explore}  items={explore}          onClose={() => setMobileOpen(false)} />
-            <MobileSection title={t.nav.services} items={services.flat()}  onClose={() => setMobileOpen(false)} />
+
+            <div className="px-5 pb-2">
+              <ConnectWalletButton fullWidth />
+            </div>
+
+            <div className="px-3 pb-6">
+              <MobileLink href="/blocks"  onClick={() => setMobileOpen(false)}>{t.nav.blocks}</MobileLink>
+              <MobileLink href="/txs"     onClick={() => setMobileOpen(false)}>{t.nav.txs}</MobileLink>
+              <MobileLink href="/tokens"  onClick={() => setMobileOpen(false)}>{t.nav.tokens}</MobileLink>
+              <MobileLink href="/nfts"    onClick={() => setMobileOpen(false)}>{t.nav.nfts}</MobileLink>
+              <MobileSection title={t.nav.tools}    items={tools}            onClose={() => setMobileOpen(false)} />
+              <MobileSection title={t.nav.explore}  items={explore}          onClose={() => setMobileOpen(false)} />
+              <MobileSection title={t.nav.services} items={services.flat()}  onClose={() => setMobileOpen(false)} />
+            </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function ConnectWalletButton({ fullWidth = false }: { fullWidth?: boolean }) {
+  const { lang } = useSettings();
+  return (
+    <button
+      type="button"
+      onClick={() => alert(lang === "fr"
+        ? "La connexion wallet sera disponible prochainement."
+        : "Wallet connection is coming soon.")}
+      className={`btn-primary !py-2 !px-3 sm:!px-4 text-xs sm:text-sm whitespace-nowrap ${
+        fullWidth ? "w-full justify-center !py-3" : ""
+      }`}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+        <path d="M21 12V7H5a2 2 0 010-4h14v4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 5v14a2 2 0 002 2h16v-5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M18 12a2 2 0 100 4h4v-4z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span className="hidden sm:inline">Connect</span>
+      <span className="sm:hidden inline">{fullWidth ? "Connect wallet" : ""}</span>
+    </button>
   );
 }
 

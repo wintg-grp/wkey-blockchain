@@ -1,4 +1,6 @@
 import { PageShell } from "@/components/PageShell";
+import { StatTile } from "@/components/StatTile";
+import { StatCluster } from "@/components/StatCluster";
 import { getClient, networkFromParam } from "@/lib/rpc";
 
 export const revalidate = 0;
@@ -48,25 +50,16 @@ export default async function NodeTrackerPage({ searchParams }: { searchParams: 
           Validators seen producing blocks on {network} over the last {data.sample} blocks.
         </p>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-10">
-          <div className="rounded-3xl bg-wintg-gradient text-accent-fg p-6">
-            <div className="text-[10px] uppercase tracking-[0.18em] font-bold opacity-80">Latest block</div>
-            <div className="display text-4xl mt-2 leading-none">#{data.head.number?.toString()}</div>
-          </div>
-          <div className="card p-6">
-            <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-text-muted">Active validators</div>
-            <div className="display text-4xl mt-2 leading-none">{data.validators.length}</div>
-          </div>
-          <div className="card-inverse p-6">
-            <div className="text-[10px] uppercase tracking-[0.18em] font-bold opacity-70">Sampled blocks</div>
-            <div className="display text-4xl mt-2 leading-none">{data.sample}</div>
-          </div>
-          <div className="card p-6">
-            <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-text-muted">Top share</div>
-            <div className="display text-4xl mt-2 leading-none">
-              {data.validators[0] ? `${Math.round((data.validators[0].count / data.sample) * 100)}%` : "—"}
-            </div>
-          </div>
+        <div className="mt-10">
+          <StatCluster>
+            <StatTile variant="accent" label="Latest block" value={`#${data.head.number?.toString()}`} />
+            <StatTile label="Active validators" value={data.validators.length} />
+            <StatTile variant="inverse" label="Sampled blocks" value={data.sample} />
+            <StatTile
+              label="Top share"
+              value={data.validators[0] ? `${Math.round((data.validators[0].count / data.sample) * 100)}%` : "—"}
+            />
+          </StatCluster>
         </div>
 
         <section className="card mt-10 overflow-hidden">

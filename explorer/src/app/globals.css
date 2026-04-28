@@ -116,3 +116,25 @@
     radial-gradient(circle at 1px 1px, rgba(255,106,26,0.08) 1px, transparent 1px);
   background-size: 24px 24px;
 }
+
+/* Stat cluster — 4 stats rendered as a single quartered card on mobile,
+   4 separate cards on desktop. Cells inherit cluster background on mobile
+   and detach with their own border / radius on desktop. */
+@layer components {
+  .stat-cluster {
+    @apply grid grid-cols-2 gap-px bg-border rounded-3xl overflow-hidden
+           lg:bg-transparent lg:gap-4 lg:grid-cols-4 lg:rounded-none lg:overflow-visible;
+  }
+  .stat-cell {
+    @apply bg-surface p-4 sm:p-5
+           lg:rounded-3xl lg:border lg:border-border;
+  }
+  .stat-cell-accent {
+    @apply bg-wintg-gradient text-accent-fg p-4 sm:p-5
+           lg:rounded-3xl;
+  }
+  .stat-cell-inverse {
+    @apply bg-inverse text-inverse-fg p-4 sm:p-5
+           lg:rounded-3xl;
+  }
+}
