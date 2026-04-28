@@ -1,0 +1,43 @@
+{
+  "network": "wintgMainnet",
+  "chainId": "2280",
+  "deployer": "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+  "timestamp": "2026-04-28T22:23:36.896Z",
+  "contracts": {
+    "TimelockEscrow": {
+      "address": "0x502cc21C444c8Dae80E8179bA09356D029F060Ae",
+      "constructorArgs": []
+    },
+    "LayawayEscrow": {
+      "address": "0x827821F1de317d56ddeB7b1598D12Bb3De8B4932",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ]
+    },
+    "StakingFactory": {
+      "address": "0x461136447550b62Acba25D73D1Fa7fd7e3c2549A",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x670b8D31a8A2bDfBf03995188e96Cc6444227Ea5"
+      ]
+    },
+    "YieldFarmFactory": {
+      "address": "0x8eab6c7338232506F09E022aAe4C9FD116789bE3",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x670b8D31a8A2bDfBf03995188e96Cc6444227Ea5"
+      ]
+    },
+    "WtgCfaPriceOracle": {
+      "address": "0xBF9611B2671FB566865eBF928bd89d40b64C7A08",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+        "5000000000"
+      ]
+    }
+  }
+}
