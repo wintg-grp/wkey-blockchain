@@ -25,7 +25,11 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BESU_VERSION="${BESU_VERSION:-26.4.0}"
-BESU_HOME="/opt/besu/${BESU_VERSION}"
+# The official tarball extracts to a top-level directory named besu-<version>;
+# we keep the same layout under /opt/besu/ so /opt/besu/current can stably
+# point to the active install and /opt/besu/besu-<old> remains usable for
+# rollbacks.
+BESU_HOME="/opt/besu/besu-${BESU_VERSION}"
 BESU_USER="besu"
 
 step()  { printf "\n\033[1;36m▶ %s\033[0m\n" "$*"; }
