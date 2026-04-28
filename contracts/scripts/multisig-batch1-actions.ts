@@ -69,14 +69,28 @@ async function main() {
   const chainMeta = await ethers.getContractAt("WintgChainMetadata", manifest.contracts.WintgChainMetadata.address);
 
   // -----------------------------------------------------------------------
-  // Action 1 — Authorize the factory
+  // Action 1 — Authorize all known factories (ERC-20 + NFT 721 + NFT 1155)
   // -----------------------------------------------------------------------
   if (!SKIP_AUTH) {
-    const already = await registry.isAuthorizedFactory(factoryAddr);
-    if (already) {
-      console.log(`\n✅ Factory ${factoryAddr} déjà autorisée — skip action 1`);
-    } else {
-      const data = registry.interface.encodeFunctionData("setFactoryAuthorized", [factoryAddr, true]);
+    const allFactories: { name: string; address: string }[] = [
+      { name: "ERC20FactoryV2", address: factoryAddr },
+    ];
+
+    // Also pick up Batch 2 factories if present.
+    const batch2Path = resolve(__dirname, `../deployments/${networkKey}-batch2.json`);
+    if (existsSync(batch2Path)) {
+      const batch2 = JSON.parse(readFileSync(batch2Path, "utf-8"));
+      if (batch2.contracts.NFTFactoryV2)   allFactories.push({ name: "NFTFactoryV2",   address: batch2.contracts.NFTFactoryV2.address });
+      if (batch2.contracts.NFTFactory1155) allFactories.push({ name: "NFTFactory1155", address: batch2.contracts.NFTFactory1155.address });
+    }
+
+    for (const f of allFactories) {
+      const already = await registry.isAuthorizedFactory(f.address);
+      if (already) {
+        console.log(`\n✅ ${f.name} (${f.address}) déjà autorisée — skip`);
+        continue;
+      }
+      const data = registry.interface.encodeFunctionData("setFactoryAuthorized", [f.address, true]);
       await executeMultisigCall({
         treasury: treasury as any,
         to: await registry.getAddress(),
@@ -84,10 +98,10 @@ async function main() {
         data,
         threshold,
         signers,
-        description: `setFactoryAuthorized(${factoryAddr}, true)`,
+        description: `setFactoryAuthorized(${f.name} = ${f.address}, true)`,
       });
-      const after = await registry.isAuthorizedFactory(factoryAddr);
-      console.log(`   verif: factory authorized = ${after ? "✅" : "❌"}`);
+      const after = await registry.isAuthorizedFactory(f.address);
+      console.log(`   verif: ${f.name} authorized = ${after ? "✅" : "❌"}`);
     }
   }
 
