@@ -1,0 +1,13 @@
+[Unit]
+Description=WINTG Validator Key Backup (AES-256 encrypted)
+After=besu-mainnet.service besu-testnet.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/opt/wintg-backup/.env
+WorkingDirectory=/opt/wintg-backup
+ExecStart=/opt/wintg-backup/backup-validator-keys.sh
+StandardOutput=append:/var/log/wintg-backup.log
+StandardError=append:/var/log/wintg-backup.log
+User=root
+Group=root
