@@ -1,0 +1,57 @@
+{
+  "network": "wintgTestnet",
+  "chainId": "22800",
+  "deployer": "0x646AeA0CFF0c8899A4E2E50fb01181CC7a492A03",
+  "timestamp": "2026-04-29T07:40:22.718Z",
+  "contracts": {
+    "WintgPriceAdmin": {
+      "address": "0x35aFfEd29f661551A5Fec4040129F9c2Bdd13af9",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ]
+    },
+    "LiquidityReserveVault": {
+      "address": "0x501CFcCd34f8B12283aE7501433D234F1c00AE44",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36"
+      ]
+    },
+    "SubscriptionPayment": {
+      "address": "0x6992Beb3EfABB70B9C9A6025a0a7503d97F2cF8d",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x35aFfEd29f661551A5Fec4040129F9c2Bdd13af9",
+        "0x501CFcCd34f8B12283aE7501433D234F1c00AE44"
+      ]
+    },
+    "WintgFaucet": {
+      "address": "0x1a93C2f164774A3dB38b50a46dE5936E01702402",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0xD7989c042A1ce71F0fF00B4fAd66B4c6394C8EC6"
+      ]
+    },
+    "USDWVault": {
+      "address": "0x824240db17577e05210607B882E60D966C70cD3C",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x595CaeD7E38d34cFc4013af5bF86B0D38E115351",
+        "0x401cA097F6105384A3cd327bA86AE950E9A84Ef8",
+        "0x35aFfEd29f661551A5Fec4040129F9c2Bdd13af9",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "100000000000000000000000"
+      ]
+    },
+    "WCFAVault": {
+      "address": "0xE0d43315f1cC8311A2420da88E1B65d523ae9CDe",
+      "constructorArgs": [
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "0x595CaeD7E38d34cFc4013af5bF86B0D38E115351",
+        "0x23100037E793357c5105aC82A75fe5aC39f22BE3",
+        "0x35aFfEd29f661551A5Fec4040129F9c2Bdd13af9",
+        "0xEF9e374533f6437530F3f981dfef05B0E3117b36",
+        "50000000000000000000000000"
+      ]
+    }
+  }
+}
