@@ -1,0 +1,14 @@
+{
+  "name": "wintg-oracle-worker",
+  "version": "1.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "start": "node oracle.js"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0",
+    "viem": "^2.21.0"
+  }
+}

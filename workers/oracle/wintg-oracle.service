@@ -1,0 +1,25 @@
+[Unit]
+Description=WINTG WTG/CFA Oracle Pusher
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/wintg-oracle
+EnvironmentFile=/opt/wintg-oracle/.env
+ExecStart=/usr/bin/node oracle.js
+Restart=always
+RestartSec=10
+User=wintg
+Group=wintg
+StandardOutput=append:/var/log/wintg-oracle.log
+StandardError=append:/var/log/wintg-oracle.log
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/log /opt/wintg-oracle
+
+[Install]
+WantedBy=multi-user.target
