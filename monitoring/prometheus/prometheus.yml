@@ -11,36 +11,26 @@ rule_files:
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: ['alertmanager:9093']
+        - targets: ['127.0.0.1:9093']
 
 scrape_configs:
   - job_name: prometheus
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['127.0.0.1:9090']
 
-  # ---------------------------------------------------------------------------
-  # Besu — chaque nœud expose ses métriques sur :9545
-  # ---------------------------------------------------------------------------
-  - job_name: besu-validator
+  - job_name: besu-mainnet
     metrics_path: /metrics
     static_configs:
-      - targets: ['host.docker.internal:9545']  # validateur primaire local
-        labels: { node: 'validator-01', role: 'validator' }
-      # - targets: ['10.0.0.11:9545']
-      #   labels: { node: 'standby-01', role: 'standby' }
-      # - targets: ['10.0.0.20:9545']
-      #   labels: { node: 'rpc-01',     role: 'rpc' }
+      - targets: ['127.0.0.1:9545']
+        labels: { node: 'validator-mainnet', role: 'validator', network: 'mainnet' }
 
-  # ---------------------------------------------------------------------------
-  # node-exporter (CPU, RAM, disque, réseau host)
-  # ---------------------------------------------------------------------------
+  - job_name: besu-testnet
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['127.0.0.1:9546']
+        labels: { node: 'validator-testnet', role: 'validator', network: 'testnet' }
+
   - job_name: node-exporter
     static_configs:
-      - targets: ['host.docker.internal:9100']
-
-  # ---------------------------------------------------------------------------
-  # Blockscout (si déployé)
-  # ---------------------------------------------------------------------------
-  # - job_name: blockscout
-  #   static_configs:
-  #     - targets: ['host.docker.internal:4000']
+      - targets: ['127.0.0.1:9100']
+        labels: { instance: 'wintg-server' }
