@@ -1,0 +1,13 @@
+{
+  "network": "wintgMainnet",
+  "official": {
+    "OfficialStakingPool": {
+      "address": "0x708aB3f2787D109071cB1Ca296a39817A6fa4393",
+      "stakeToken": "0x595CaeD7E38d34cFc4013af5bF86B0D38E115351",
+      "rewardToken": "0xEf6df253dF3A24160233564efDdcFa8EB99Ea337",
+      "rewardRate": "10000000000000000",
+      "initialRewardTopup": "1000000000000000000000000",
+      "note": "Stake WWTG → earn WKEY (0.01 WKEY/sec ≈ 864/day)"
+    }
+  }
+}

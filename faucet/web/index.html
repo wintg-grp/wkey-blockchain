@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>WINTG Faucet — Tokens testnet gratuits pour développeurs</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --bg: #0A0B12;
+    --surface: #16171f;
+    --surface-2: #1f212c;
+    --border: #2c2e3b;
+    --text: #FFF1E8;
+    --text-muted: #8a8579;
+    --orange: #FF6A1A;
+    --green: #10B981;
+    --red: #EF4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+  .container { max-width: 680px; width: 100%; }
+  h1 {
+    font-weight: 900; letter-spacing: -0.04em; line-height: 1;
+    color: var(--orange); margin: 0 0 16px;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    text-transform: uppercase;
+  }
+  .sub { color: var(--text-muted); margin-bottom: 32px; line-height: 1.5; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 20px; margin-bottom: 16px;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px 12px; font-size: 12px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.ok { background: var(--green); }
+  .dot.warn { background: var(--orange); }
+  .dot.err { background: var(--red); }
+
+  button, .btn {
+    background: var(--orange); color: white; border: none;
+    border-radius: 14px; padding: 12px 18px; font-weight: 600;
+    cursor: pointer; transition: all .15s; font-size: 15px;
+  }
+  button:hover { transform: translateY(-1px); opacity: .92; }
+  button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: var(--surface-2); color: var(--text); }
+  .btn-block { display: block; width: 100%; }
+
+  .grid { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+  .token-btn {
+    text-align: left; padding: 14px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 14px; color: var(--text); cursor: pointer;
+  }
+  .token-btn:hover { border-color: var(--orange); }
+  .token-btn.selected { border-color: var(--orange); background: rgba(255,106,26,0.1); }
+  .token-btn .name { font-weight: 700; }
+  .token-btn .meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .captcha {
+    text-align: center; padding: 24px; margin: 16px 0;
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--border); border-radius: 16px;
+  }
+  .captcha .question {
+    font-size: 38px; font-weight: 800; letter-spacing: 0.05em;
+    margin-bottom: 16px; color: var(--orange);
+  }
+  .captcha .choices { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .captcha button { padding: 14px 0; font-size: 18px; }
+
+  .log {
+    background: #0a0a10; border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px; margin-top: 12px; font-size: 12px; font-family: monospace;
+    max-height: 200px; overflow: auto;
+  }
+  .log .ok { color: var(--green); }
+  .log .err { color: var(--red); }
+
+  a { color: var(--orange); }
+
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+    .captcha .choices { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>WINTG Faucet</h1>
+<p class="sub">
+  Reçois gratuitement des tokens <strong>testnet</strong> WINTG pour développer et tester.
+  100 WTG, 1 000 WKEY, 10 USDW, 5 000 WCFA, 100 WWTG par jour par adresse.
+</p>
+
+<!-- Network status -->
+<div class="card">
+  <div id="netStatus">
+    <span class="pill"><span class="dot warn"></span> En vérification…</span>
+  </div>
+  <div style="margin-top:12px;">
+    <button id="btnConnectWallet" class="btn-ghost">🔗 Connecter le wallet</button>
+    <button id="btnSwitchNetwork" class="btn-ghost" style="margin-left:8px; display:none">↻ Passer sur WINTG Testnet</button>
+  </div>
+  <div id="addressDisplay" style="margin-top:8px; font-family:monospace; font-size:12px; color:var(--text-muted);"></div>
+</div>
+
+<!-- Token selection -->
+<div class="card">
+  <div style="font-weight:600; margin-bottom:10px;">1. Choisis un token</div>
+  <div id="tokenGrid" class="grid"></div>
+</div>
+
+<!-- Captcha -->
+<div class="card">
+  <div style="font-weight:600; margin-bottom:10px;">2. Résous le captcha</div>
+  <div id="captchaArea" class="captcha">
+    <button id="btnNewCaptcha" class="btn-ghost btn-block">🛡️ Charger un captcha</button>
+  </div>
+</div>
+
+<!-- Claim -->
+<div class="card">
+  <div style="font-weight:600; margin-bottom:10px;">3. Récupère tes tokens</div>
+  <button id="btnClaim" class="btn-block" disabled>Claim 🪙</button>
+</div>
+
+<div id="log" class="log" style="display:none;"></div>
+
+<p class="sub" style="margin-top:32px; font-size:13px;">
+  Faucet WINTG officielle · testnet uniquement (chain 22800) · backend signed claims.
+</p>
+
+</div>
+
+<script>
+const API = window.location.origin.includes("localhost")
+  ? "http://localhost:3001"
+  : "https://faucet.wintg.network";
+
+const FAUCET_CONTRACT_ABI = [
+  "function claim(address token,uint256 amount,bytes32 nonce,uint64 deadline,bytes signature) external",
+  "function nextClaimAt(address user, address token) external view returns (uint64)"
+];
+
+const TARGET_CHAIN_HEX = "0x5910"; // 22800
+const TARGET_NETWORK = {
+  chainId: TARGET_CHAIN_HEX,
+  chainName: "WINTG Testnet",
+  nativeCurrency: { name: "WINTG", symbol: "WTG", decimals: 18 },
+  rpcUrls: ["https://testnet-rpc.wintg.network"],
+  blockExplorerUrls: ["https://scan.wintg.network"]
+};
+
+let connectedAddress = null;
+let selectedTokenKey = null;
+let currentCaptcha = null;
+let captchaSolved = false;
+
+function logLine(text, ok) {
+  const log = document.getElementById("log");
+  log.style.display = "block";
+  const div = document.createElement("div");
+  div.className = ok ? "ok" : "err";
+  div.textContent = `${new Date().toLocaleTimeString()} ${ok ? "✓" : "✗"} ${text}`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function refreshNet() {
+  if (!window.ethereum) {
+    document.getElementById("netStatus").innerHTML = `<span class="pill"><span class="dot err"></span> Pas de wallet — installe MetaMask</span>`;
+    return;
+  }
+  const cid = await window.ethereum.request({ method: "eth_chainId" });
+  if (cid === TARGET_CHAIN_HEX) {
+    document.getElementById("netStatus").innerHTML = `<span class="pill"><span class="dot ok"></span> Connecté à WINTG Testnet</span>`;
+    document.getElementById("btnSwitchNetwork").style.display = "none";
+  } else {
+    document.getElementById("netStatus").innerHTML = `<span class="pill"><span class="dot warn"></span> Mauvais réseau (${cid}) — change pour WINTG Testnet</span>`;
+    document.getElementById("btnSwitchNetwork").style.display = "inline-block";
+  }
+}
+
+async function connectWallet() {
+  if (!window.ethereum) { alert("Aucun wallet détecté. Installe MetaMask."); return; }
+  const accs = await window.ethereum.request({ method: "eth_requestAccounts" });
+  connectedAddress = accs[0];
+  document.getElementById("addressDisplay").textContent = `Wallet: ${connectedAddress.slice(0,6)}…${connectedAddress.slice(-4)}`;
+  refreshNet();
+  updateClaimButton();
+}
+
+async function switchNetwork() {
+  try {
+    await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: TARGET_CHAIN_HEX }] });
+  } catch (e) {
+    if (e.code === 4902) {
+      await window.ethereum.request({ method: "wallet_addEthereumChain", params: [TARGET_NETWORK] });
+    }
+  }
+  refreshNet();
+}
+
+async function loadTokens() {
+  const r = await fetch(`${API}/api/tokens`);
+  const j = await r.json();
+  const grid = document.getElementById("tokenGrid");
+  grid.innerHTML = "";
+  Object.entries(j.tokens).forEach(([key, tk]) => {
+    const btn = document.createElement("button");
+    btn.className = "token-btn";
+    btn.dataset.key = key;
+    const human = (BigInt(tk.amount) / 10n**18n).toString();
+    btn.innerHTML = `<div class="name">${tk.label}</div><div class="meta">${human} unités · 24h cooldown</div>`;
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".token-btn").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedTokenKey = key;
+      updateClaimButton();
+    });
+    grid.appendChild(btn);
+  });
+}
+
+async function loadCaptcha() {
+  const r = await fetch(`${API}/api/captcha`);
+  if (!r.ok) { logLine("Captcha rate-limited", false); return; }
+  const j = await r.json();
+  currentCaptcha = j;
+  captchaSolved = false;
+  const area = document.getElementById("captchaArea");
+  area.innerHTML = `<div class="question">${j.question} = ?</div>`;
+  const choicesDiv = document.createElement("div");
+  choicesDiv.className = "choices";
+  j.choices.forEach(choice => {
+    const b = document.createElement("button");
+    b.textContent = choice;
+    b.addEventListener("click", () => answerCaptcha(choice));
+    choicesDiv.appendChild(b);
+  });
+  area.appendChild(choicesDiv);
+}
+
+function answerCaptcha(ans) {
+  // We don't validate locally — the server validates on /api/claim
+  // We just store the user's answer for the claim
+  currentCaptcha.userAnswer = ans;
+  captchaSolved = true;
+  document.querySelectorAll(".captcha button").forEach(b => {
+    b.disabled = true;
+    if (b.textContent == ans) b.style.background = "rgba(255,106,26,0.2)";
+  });
+  document.getElementById("captchaArea").appendChild(
+    Object.assign(document.createElement("div"), { textContent: "Réponse enregistrée", style: "margin-top:12px;color:var(--text-muted);font-size:13px" })
+  );
+  updateClaimButton();
+}
+
+function updateClaimButton() {
+  const ok = connectedAddress && selectedTokenKey && captchaSolved;
+  document.getElementById("btnClaim").disabled = !ok;
+}
+
+async function claim() {
+  try {
+    document.getElementById("btnClaim").disabled = true;
+    logLine("Signature wallet…");
+    const ts = Math.floor(Date.now() / 1000);
+    const walletSig = await window.ethereum.request({
+      method: "personal_sign", params: [`wintg-faucet:${ts}`, connectedAddress]
+    });
+
+    logLine("Soumission au backend…");
+    const r = await fetch(`${API}/api/claim`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        captchaId: currentCaptcha.id,
+        answer:    currentCaptcha.userAnswer,
+        address:   connectedAddress,
+        tokenKey:  selectedTokenKey,
+        walletSig, walletTs: ts
+      })
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${r.status}`);
+    }
+    const j = await r.json();
+    logLine(`Backend OK. Soumission on-chain pour ${j.label}…`, true);
+
+    // Send the signed claim() call from the user's wallet
+    const iface = new Function("return [" + JSON.stringify(FAUCET_CONTRACT_ABI[0]) + "]")();
+    const data = encodeFunctionCall(j);
+    const txHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [{ from: connectedAddress, to: j.faucetContract, data }]
+    });
+    logLine(`✓ Tx envoyée : ${txHash}`, true);
+    logLine(`Tu peux suivre sur https://scan.wintg.network/tx/${txHash}`, true);
+  } catch (e) {
+    logLine("Erreur: " + (e.message || String(e)), false);
+  } finally {
+    document.getElementById("btnClaim").disabled = false;
+  }
+}
+
+// Encode function call manually (no ethers in browser to keep it light)
+function encodeFunctionCall(j) {
+  // claim(address token, uint256 amount, bytes32 nonce, uint64 deadline, bytes signature)
+  const selector = "0xfa540801"; // keccak256("claim(address,uint256,bytes32,uint64,bytes)").slice(0,4) — placeholder
+  // We use a simpler approach: ABI encode via eth_call to a dummy then sendTransaction
+  // For simplicity we use ethers via dynamic import
+  return _encodeWithEthers(j);
+}
+
+let _ethersLib = null;
+async function _ensureEthers() {
+  if (_ethersLib) return _ethersLib;
+  const m = await import("https://esm.sh/ethers@6.13.0");
+  _ethersLib = m;
+  return m;
+}
+
+async function _encodeWithEthers(j) {
+  const { Interface } = await _ensureEthers();
+  const iface = new Interface(FAUCET_CONTRACT_ABI);
+  return iface.encodeFunctionData("claim", [j.token, j.amount, j.nonce, j.deadline, j.signature]);
+}
+
+// Override claim to use async encode
+async function claimAsync() {
+  try {
+    document.getElementById("btnClaim").disabled = true;
+    logLine("Signature wallet…");
+    const ts = Math.floor(Date.now() / 1000);
+    const walletSig = await window.ethereum.request({
+      method: "personal_sign", params: [`wintg-faucet:${ts}`, connectedAddress]
+    });
+
+    logLine("Soumission au backend…");
+    const r = await fetch(`${API}/api/claim`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        captchaId: currentCaptcha.id,
+        answer:    currentCaptcha.userAnswer,
+        address:   connectedAddress,
+        tokenKey:  selectedTokenKey,
+        walletSig, walletTs: ts
+      })
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${r.status}`);
+    }
+    const j = await r.json();
+    logLine(`Backend OK. Soumission on-chain pour ${j.label}…`, true);
+
+    const data = await _encodeWithEthers(j);
+    const txHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [{ from: connectedAddress, to: j.faucetContract, data }]
+    });
+    logLine(`✓ Tx envoyée : ${txHash}`, true);
+    logLine(`Suivre sur scan.wintg.network/tx/${txHash}`, true);
+
+    // Reset for next claim
+    captchaSolved = false; currentCaptcha = null;
+    document.getElementById("captchaArea").innerHTML = `<button id="btnNewCaptcha" class="btn-ghost btn-block">🛡️ Charger un nouveau captcha</button>`;
+    document.getElementById("btnNewCaptcha").addEventListener("click", loadCaptcha);
+    updateClaimButton();
+  } catch (e) {
+    logLine("Erreur: " + (e.message || String(e)), false);
+  } finally {
+    document.getElementById("btnClaim").disabled = !(connectedAddress && selectedTokenKey && captchaSolved);
+  }
+}
+
+document.getElementById("btnConnectWallet").addEventListener("click", connectWallet);
+document.getElementById("btnSwitchNetwork").addEventListener("click", switchNetwork);
+document.getElementById("btnNewCaptcha").addEventListener("click", loadCaptcha);
+document.getElementById("btnClaim").addEventListener("click", claimAsync);
+
+if (window.ethereum) {
+  window.ethereum.on("chainChanged", refreshNet);
+  window.ethereum.on("accountsChanged", (accs) => {
+    connectedAddress = accs[0] || null;
+    document.getElementById("addressDisplay").textContent = connectedAddress
+      ? `Wallet: ${connectedAddress.slice(0,6)}…${connectedAddress.slice(-4)}`
+      : "";
+    updateClaimButton();
+  });
+}
+
+window.addEventListener("load", () => {
+  refreshNet();
+  loadTokens();
+});
+</script>
+
+</body>
+</html>
